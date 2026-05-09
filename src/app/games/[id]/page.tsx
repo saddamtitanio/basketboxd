@@ -106,7 +106,7 @@ export default function GameDetailPage() {
 
         {/* Score card */}
         <div className="container-custom">
-          <div className="bg-linear-to-br from-amethyst/20 to-plum/20 rounded-2xl p-8 border border-white/10">
+          <div className="bg-gradient-to-br from-amethyst/20 to-plum/20 rounded-2xl p-8 border border-white/10">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
               <div className="flex items-center gap-3">
                 {getStatusBadge()}
@@ -255,8 +255,6 @@ export default function GameDetailPage() {
         {/* Community Reviews */}
         <div className="container-custom mt-8">
           <div className="bg-gradient-to-br from-amethyst/20 to-plum/20 rounded-2xl p-6 border border-white/10">
-        <div className="container-custom mt-12">
-          <div className="bg-linear-to-br from-amethyst/20 to-plum/20 rounded-2xl p-6 border border-white/10">
             <div className="flex items-center gap-2 mb-6">
               <MessageSquare className="w-6 h-6 text-bronze" />
               <h2 className="text-2xl font-bold text-white">Community Reviews</h2>
@@ -312,7 +310,7 @@ export default function GameDetailPage() {
         {/* Top Performer */}
         {game.top_scorer && (
           <div className="container-custom mt-8">
-            <div className="bg-linear-to-br from-magenta/20 to-plum/20 rounded-2xl p-6 border border-magenta/30">
+            <div className="bg-gradient-to-br from-magenta/20 to-plum/20 rounded-2xl p-6 border border-magenta/30">
               <div className="flex items-center gap-2 mb-4">
                 <Trophy className="w-5 h-5 text-bronze" />
                 <h3 className="text-lg font-bold text-white">Top Performer</h3>
