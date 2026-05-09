@@ -1,35 +1,24 @@
-import { createClient } from "@supabase/supabase-js";
+import { AuthService } from '@/src/app/modules/auth/auth.service';
 
 export async function POST(request: Request) {
     try {
-        const supabase = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-        );
-
         const { email, password } = await request.json();
 
-        const { data, error } =
-            await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
+        const authService = await AuthService.create();
 
-        if (error) {
-            return Response.json(
-                { error: error.message },
-                { status: 400 }
-            );
-        }
+        const data = await authService.login(
+            email,
+            password
+        );
 
         return Response.json(data);
 
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
 
         return Response.json(
-            { error: "Internal server error" },
-            { status: 500 }
+            { error: error.message },
+            { status: 400 }
         );
     }
 }

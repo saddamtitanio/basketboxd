@@ -1,12 +1,12 @@
 import { AuthService } from '@/src/app/modules/auth/auth.service';
 
-export async function POST(request: Request) {
+export async function PUT(request: Request) {
     try {
         const body = await request.json();
 
         const authService = await AuthService.create();
 
-        const data = await authService.register(body);
+        const data = await authService.updateProfile(body);
 
         return Response.json(data);
 
