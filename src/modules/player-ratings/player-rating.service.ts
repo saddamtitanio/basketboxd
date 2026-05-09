@@ -1,15 +1,18 @@
 import { PlayerRatingRepository } from "./player-rating.repository";
 
-const playerRatingRepo = new PlayerRatingRepository();
-
 export class PlayerRatingService {
+    private playerRatingRepo: PlayerRatingRepository;
+
+    constructor() {
+        this.playerRatingRepo = new PlayerRatingRepository();
+    }
     async submitRating(data: {
         user_id: string;
         game_id: string;
         player_id: string;
         rating: number;
     }) {
-        const existing = await playerRatingRepo.findExistingRating(
+        const existing = await this.playerRatingRepo.findExistingRating(
             data.user_id,
             data.game_id,
             data.player_id
@@ -23,7 +26,7 @@ export class PlayerRatingService {
             throw new Error("Rating must be between 1 and 10");
         }
 
-        return playerRatingRepo.create(data);
+        return this.playerRatingRepo.create(data);
     }
 
     // Update a rating
@@ -31,26 +34,26 @@ export class PlayerRatingService {
         if (rating < 1 || rating > 10) {
             throw new Error("Rating must be between 1 and 10");
         }
-        return playerRatingRepo.update(ratingId, { rating });
+        return this.playerRatingRepo.update(ratingId, { rating });
     }
 
     // Delete ratings by game and user
     async deleteRatingsByGameUser(gameId: string, userId: string) {
-        return playerRatingRepo.deleteByGameAndUser(gameId, userId);
+        return this.playerRatingRepo.deleteByGameAndUser(gameId, userId);
     }
 
     // Get ratings for a specific game
     async getRatingsByGame(gameId: string) {
-        return playerRatingRepo.findByGame(gameId);
+        return this.playerRatingRepo.findByGame(gameId);
     }
 
     // Get ratings for a specific player
     async getRatingsByPlayer(playerId: string) {
-        return playerRatingRepo.findByPlayer(playerId);
+        return this.playerRatingRepo.findByPlayer(playerId);
     }
 
     // Get top players leaderboard
     async getLeaderboard(limit = 10, gameId: string) {
-        return playerRatingRepo.getLeaderboardByGame(gameId, limit);
+        return this.playerRatingRepo.getLeaderboardByGame(gameId, limit);
     }
 }

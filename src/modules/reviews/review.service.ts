@@ -1,11 +1,16 @@
 import { ReviewRepository } from "./review.repository";
 import { PlayerRatingRepository } from "@/src/modules/player-ratings/player-rating.repository";
 
-const reviewRepository = new ReviewRepository();
-const playerRatingRepository =
-  new PlayerRatingRepository();
 
 export class ReviewService {
+    private reviewRepository: ReviewRepository;
+    private playerRatingRepository: PlayerRatingRepository;
+
+    constructor() {
+        this.reviewRepository = new ReviewRepository();
+        this.playerRatingRepository = new PlayerRatingRepository();
+    }
+
     /* Submit full game review */
     async submitReview(data: {
         user_id: string;
@@ -20,7 +25,7 @@ export class ReviewService {
     }) {
         // prevent duplicate reviews
         const existingReview =
-        await reviewRepository.findExistingReview(
+        await this.reviewRepository.findExistingReview(
             data.user_id,
             data.game_id
         );
@@ -43,7 +48,7 @@ export class ReviewService {
 
         // create review
         const review =
-        await reviewRepository.create({
+        await this.reviewRepository.create({
             user_id: data.user_id,
             game_id: data.game_id,
             rating: data.rating,
@@ -54,7 +59,7 @@ export class ReviewService {
         const playerRatings = [];
 
         for (const player of data.player_ratings) {
-            const playerRating = await playerRatingRepository.create({
+            const playerRating = await this.playerRatingRepository.create({
                 user_id: data.user_id,
                 game_id: data.game_id,
                 player_id: player.player_id,
@@ -72,16 +77,16 @@ export class ReviewService {
 
     /* Get reviews for game */
     async getGameReviews(gameId: string) {
-        return reviewRepository.findByGame(gameId);
+        return this.reviewRepository.findByGame(gameId);
     }
 
     async getReview(reviewId: string) {
-        const review = await reviewRepository.findById(reviewId);
+        const review = await this.reviewRepository.findById(reviewId);
         if (!review) {
             throw new Error("Review not found");
         }
 
-        const playerRatings = await playerRatingRepository.findByUserAndGame(
+        const playerRatings = await this.playerRatingRepository.findByUserAndGame(
             review.user_id,
             review.game_id
         );
@@ -104,7 +109,7 @@ export class ReviewService {
         }
     ) {
         // Find existing review
-        const existingReview = await reviewRepository.findById(reviewId);
+        const existingReview = await this.reviewRepository.findById(reviewId);
         if (!existingReview) {
             throw new Error("Review not found");
         }
@@ -126,7 +131,7 @@ export class ReviewService {
         }
 
         // Update the main review
-        const updatedReview = await reviewRepository.update(reviewId, {
+        const updatedReview = await this.reviewRepository.update(reviewId, {
             rating: data.rating,
             review_text: data.review_text,
         });
@@ -136,7 +141,7 @@ export class ReviewService {
         if (data.player_ratings) {
             for (const player of data.player_ratings) {
                 // Check if rating already exists for this user/game/player
-                const existingPlayerRating = await playerRatingRepository.findByUserGamePlayer(
+                const existingPlayerRating = await this.playerRatingRepository.findByUserGamePlayer(
                     existingReview.user_id,
                     existingReview.game_id,
                     player.player_id
@@ -145,13 +150,13 @@ export class ReviewService {
                 let updatedPlayer;
                 if (existingPlayerRating) {
                     // Update existing
-                    updatedPlayer = await playerRatingRepository.update(
+                    updatedPlayer = await this.playerRatingRepository.update(
                         existingPlayerRating.id,
                         { rating: player.rating }
                     );
                 } else {
                     // Create new
-                    updatedPlayer = await playerRatingRepository.create({
+                    updatedPlayer = await this.playerRatingRepository.create({
                         user_id: existingReview.user_id,
                         game_id: existingReview.game_id,
                         player_id: player.player_id,
@@ -172,31 +177,31 @@ export class ReviewService {
     }
 
     async getUserReviews(userId: string) {
-        return reviewRepository.findByUser(userId);
+        return this.reviewRepository.findByUser(userId);
     }
     
     async likeReview(reviewId: string) {
-        return reviewRepository.incrementLikes(reviewId);
+        return this.reviewRepository.incrementLikes(reviewId);
     }
 
     async unlikeReview(reviewId: string) {
-        return reviewRepository.decrementLikes(reviewId);
+        return this.reviewRepository.decrementLikes(reviewId);
     }
 
     async deleteReview(reviewId: string) {
         // Find existing review
-        const existingReview = await reviewRepository.findById(reviewId);
+        const existingReview = await this.reviewRepository.findById(reviewId);
         if (!existingReview) {
             throw new Error("Review not found");
         }
 
         // Delete associated player ratings
-        await playerRatingRepository.deleteByGameAndUser(
+        await this.playerRatingRepository.deleteByGameAndUser(
             existingReview.game_id,
             existingReview.user_id
         );
 
         // Delete the review
-        return reviewRepository.delete(reviewId);
+        return this.reviewRepository.delete(reviewId);
     }
 }
