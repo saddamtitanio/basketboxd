@@ -141,8 +141,8 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             {/* Left Column */}
             <div className="lg:col-span-1">
-              <div className="bg-gradient-to-br from-amethyst/20 to-plum/20 rounded-2xl p-6 border border-white/10 text-center sticky top-24">
-                <div className="w-32 h-32 mx-auto bg-gradient-to-br from-bronze to-magenta rounded-full flex items-center justify-center">
+              <div className="bg-linear-to-br from-amethyst/20 to-plum/20 rounded-2xl p-6 border border-white/10 text-center sticky top-24">
+                <div className="w-32 h-32 mx-auto bg-linear-to-br from-bronze to-magenta rounded-full flex items-center justify-center">
                   <User className="w-16 h-16 text-white" />
                 </div>
 
@@ -182,7 +182,7 @@ export default function ProfilePage() {
 
             {/* Right Column */}
             <div className="lg:col-span-2">
-              <div className="bg-gradient-to-br from-amethyst/20 to-plum/20 rounded-2xl p-6 border border-white/10">
+              <div className="bg-linear-to-br from-amethyst/20 to-plum/20 rounded-2xl p-6 border border-white/10">
                 <div className="flex items-center gap-2 mb-6">
                   <BasketballIcon className="w-6 h-6 text-bronze" />
                   <h2 className="text-2xl font-bold text-white">
@@ -251,7 +251,7 @@ export default function ProfilePage() {
                         className="w-full p-3 rounded-lg bg-white/5 border border-white/20 text-white focus:outline-none focus:border-bronze transition resize-none"
                       />
                     ) : (
-                      <p className="text-gray-300 p-3 bg-white/5 rounded-lg min-h-[100px]">
+                      <p className="text-gray-300 p-3 bg-white/5 rounded-lg min-h-25">
                         {profile?.bio || "No bio yet. Click 'Edit Profile' to add one."}
                       </p>
                     )}
@@ -279,7 +279,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Recent Activity */}
-              <div className="bg-gradient-to-br from-amethyst/20 to-plum/20 rounded-2xl p-6 border border-white/10 mt-6">
+              <div className="bg-linear-to-br from-amethyst/20 to-plum/20 rounded-2xl p-6 border border-white/10 mt-6">
                 <h2 className="text-xl font-bold text-white mb-4">Recent Activity</h2>
                 <div className="text-center py-8 text-gray-400">
                   <BasketballIcon className="w-12 h-12 text-gray-500 mx-auto mb-3" />

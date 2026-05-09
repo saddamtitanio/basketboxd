@@ -45,14 +45,14 @@ export const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default' })
 
   return (
     <Link href={`/games/${game.id}`}>
-      <div className="group bg-gradient-to-br from-amethyst/20 to-plum/20 rounded-xl overflow-hidden hover:from-amethyst/30 hover:to-plum/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-magenta/20 cursor-pointer border border-white/10">
-        <div className="relative aspect-[4/3] overflow-hidden">
+      <div className="group bg-linear-to-br from-amethyst/20 to-plum/20 rounded-xl overflow-hidden hover:from-amethyst/30 hover:to-plum/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-magenta/20 cursor-pointer border border-white/10">
+        <div className="relative aspect-4/3 overflow-hidden">
           <img 
             src={game.image_url} 
             alt={`${game.home_team.name} vs ${game.away_team.name}`}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-amethyst/80 via-plum/20 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-amethyst/80 via-plum/20 to-transparent" />
           {getStatusBadge()}
           
           <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1">

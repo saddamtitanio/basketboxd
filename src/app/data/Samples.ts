@@ -148,3 +148,49 @@ export const sampleGames: Game[] = [
     image_url: 'https://images.unsplash.com/photo-1551958219-acbc608c6377?w=400&h=300&fit=crop',
   }
 ];
+
+
+export interface Playlist {
+  id: string;
+  title: string;
+  description: string;
+  author: string;
+  authorUsername: string;
+  authorAvatar?: string;
+  games: Game[];
+  createdAt: string;
+  isPublic: boolean;
+}
+
+export const samplePlaylists: Playlist[] = [
+  {
+    id: '1',
+    title: 'Must Watch Classics',
+    description: 'The greatest basketball games that every fan needs to see at least once in their lifetime.',
+    author: 'Basketball Historian',
+    authorUsername: 'hoops_history',
+    games: [sampleGames[0], sampleGames[1], sampleGames[2]],
+    createdAt: '2026-04-15T10:00:00Z',
+    isPublic: true,
+  },
+  {
+    id: '2',
+    title: '2025 Playoffs Highlights',
+    description: 'The most intense and memorable games from last year\'s playoff run.',
+    author: 'Playoff P',
+    authorUsername: 'postseason_hero',
+    games: [sampleGames[3], sampleGames[4]],
+    createdAt: '2026-04-20T14:30:00Z',
+    isPublic: true,
+  },
+  {
+    id: '3',
+    title: 'Underrated Gems',
+    description: 'Games that didn\'t get enough attention but are absolute bangers from start to finish.',
+    author: 'Deep Cuts',
+    authorUsername: 'bball_junkie',
+    games: [sampleGames[5], sampleGames[1], sampleGames[4]],
+    createdAt: '2026-04-25T09:15:00Z',
+    isPublic: true,
+  },
+];

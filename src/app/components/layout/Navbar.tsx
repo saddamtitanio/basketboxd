@@ -69,7 +69,7 @@ export const Navbar: React.FC = () => {
             className="flex items-center gap-2 group cursor-pointer"
           >
             <BasketballIcon className="w-7 h-7 text-bronze group-hover:scale-110 transition-transform duration-300" />
-            <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-bronze to-magenta bg-clip-text text-transparent">
+            <span className="font-bold text-xl tracking-tight bg-linear-to-r from-bronze to-magenta bg-clip-text text-transparent">
               BasketBoxd
             </span>
           </div>

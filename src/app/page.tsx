@@ -3,7 +3,7 @@ import { Footer } from './components/layout/Footer';
 import { HeroSection } from './components/home/HeroSection';
 import { GameSection } from './components/home/GameSection';
 import { sampleGames } from './data/Samples';
-import { Flame, TrendingUp, Clock, Zap, Trophy } from 'lucide-react';
+import { Flame, Clock, Zap, Trophy } from 'lucide-react';
 
 export default function Home() {
   const liveGamesList = sampleGames.filter(g => 
@@ -63,11 +63,6 @@ export default function Home() {
             />
           )}
           
-          <GameSection 
-            title="Recommended for You" 
-            games={sampleGames.slice(0, 5)}
-            icon={<TrendingUp className="w-5 h-5 text-pink-lobster" />}
-          />
         </div>
       </main>
       

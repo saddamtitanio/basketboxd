@@ -17,7 +17,7 @@ export const HeroSection: React.FC = () => {
   };
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-amethyst via-plum to-magenta py-24">
+    <section className="relative overflow-hidden bg-linear-to-br from-amethyst via-plum to-magenta py-24">
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-20 left-10 w-72 h-72 bg-white rounded-full blur-[100px]" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-bronze rounded-full blur-[120px]" />
