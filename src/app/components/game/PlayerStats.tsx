@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, CheckCircle } from 'lucide-react';
-import type { Player } from '@/app/data/Samples';
+import type { Player } from '@/src/app/data/Samples';
 
 type Props = {
   title: string;

@@ -35,7 +35,7 @@ export const CreateListPopup: React.FC<CreateListPopupProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
-      <div className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto bg-gradient-to-br from-amethyst to-plum rounded-2xl border border-white/20 p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto bg-linear-to-br from-amethyst to-plum rounded-2xl border border-white/20 p-6" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white">
           <X className="w-6 h-6" />
         </button>

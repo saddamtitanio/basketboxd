@@ -19,17 +19,17 @@ export const ListCard: React.FC<ListCardProps> = ({ playlist, formatDate }) => {
   return (
     <div
       onClick={() => router.push(`/list/${playlist.id}`)}
-      className="group bg-gradient-to-br from-amethyst/20 to-plum/20 rounded-2xl overflow-hidden hover:from-amethyst/30 hover:to-plum/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-magenta/20 cursor-pointer border border-white/10"
+      className="group bg-linear-to-br from-amethyst/20 to-plum/20 rounded-2xl overflow-hidden hover:from-amethyst/30 hover:to-plum/30 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl hover:shadow-magenta/20 cursor-pointer border border-white/10"
     >
       {/* Preview Games */}
       <div className="grid grid-cols-3 gap-0.5 h-32 overflow-hidden">
         {playlist.games.slice(0, 6).map((game, idx) => (
-          <div key={idx} className="relative aspect-square bg-gradient-to-br from-bronze/20 to-magenta/20 overflow-hidden">
-            <img
-              src={game.image_url}
+          <div key={idx} className="relative aspect-square bg-linear-to-br from-bronze/20 to-magenta/20 overflow-hidden">
+            {/* <img
+              src={game?.image_url ?? ''}
               alt={game.home_team.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
+            /> */}
             <div className="absolute inset-0 bg-black/40" />
           </div>
         ))}

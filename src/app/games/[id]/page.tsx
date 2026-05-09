@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Navbar } from '@/src/app/components/layout/Navbar';
 import { Footer } from '@/src/app/components/layout/Footer';
 import { sampleGames } from '@/src/app/data/Samples';
-import PlayerStats from '@/app/components/game/PlayerStats';
-import { useAuth } from '@/app/context/AuthContext';
+import PlayerStats from '@/src/app/components/game/PlayerStats';
+import { createClient } from '@/src/app/lib/supabase/client';
 import {
   Star, Flame, Clock, ArrowLeft, BookmarkPlus,
   CheckCircle, MessageSquare, Calendar, MapPin,
@@ -17,23 +17,33 @@ import { basketball } from '@lucide/lab';
 import { Button } from '@/src/app/components/ui/Button';
 
 const BasketballIcon = createLucideIcon('Basketball', basketball);
+const supabase = createClient();
 
 type Review = {
   id: string;
   username: string;
-  name: string;
+  display_name: string;
   rating: number;
   text: string;
-  createdAt: string;
+  created_at: string;
+};
+
+type Profile = {
+  id: string;
+  username: string;
+  display_name: string;
+  avatar_url?: string;
 };
 
 export default function GameDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
   const gameId = params.id as string;
   const game = sampleGames.find((g) => g.id === gameId);
 
+  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
   const [isWatchlisted, setIsWatchlisted] = useState(false);
   const [isWatched, setIsWatched] = useState(false);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -42,6 +52,20 @@ export default function GameDetailPage() {
   const [hoverRating, setHoverRating] = useState(0);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    const initializePage = async () => {
+      try {
+        setLoading(true);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializePage();
+  }, []);
 
   if (!game) {
     return (
@@ -56,17 +80,20 @@ export default function GameDetailPage() {
     );
   }
 
-  const handleSubmitReview = () => {
-    if (!user) { router.push('/auth/login'); return; }
+  const handleSubmitReview = async () => {
+    if (!user) { 
+      router.push('/auth/login'); 
+      return; 
+    }
     if (!reviewText.trim()) return;
 
     const newReview: Review = {
       id: Date.now().toString(),
-      username: user.username,
-      name: user.name,
+      username: profile?.username || 'anonymous',
+      display_name: profile?.display_name || 'User',
       rating: reviewRating,
       text: reviewText.trim(),
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
     };
 
     setReviews((prev) => [newReview, ...prev]);
@@ -90,7 +117,19 @@ export default function GameDetailPage() {
     }
   };
 
-  const alreadyReviewed = user && reviews.some((r) => r.username === user.username);
+  const alreadyReviewed = user && reviews.some((r) => r.username === profile?.username);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <Navbar />
+        <div className="container-custom py-20 text-center">
+          <div className="text-white text-xl">Loading...</div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -106,7 +145,7 @@ export default function GameDetailPage() {
 
         {/* Score card */}
         <div className="container-custom">
-          <div className="bg-gradient-to-br from-amethyst/20 to-plum/20 rounded-2xl p-8 border border-white/10">
+          <div className="bg-linear-to-br from-amethyst/20 to-plum/20 rounded-2xl p-8 border border-white/10">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
               <div className="flex items-center gap-3">
                 {getStatusBadge()}
@@ -137,13 +176,10 @@ export default function GameDetailPage() {
               </div>
             </div>
 
-            {/* Scoreboard with logos */}
+            {/* Scoreboard */}
             <div className="text-center mb-8">
               <div className="flex items-center justify-center gap-8 md:gap-12">
                 <div className="flex flex-col items-center gap-2">
-                  {game.home_team.logo_url && (
-                    <img src={game.home_team.logo_url} alt={game.home_team.name} className="w-16 h-16 object-contain" />
-                  )}
                   <div className="text-xl md:text-3xl font-bold text-white">{game.home_team.name}</div>
                   <div className="text-sm text-gray-400">{game.home_team.city}</div>
                 </div>
@@ -153,9 +189,6 @@ export default function GameDetailPage() {
                   <div className="text-5xl md:text-6xl font-bold text-magenta">{game.away_score ?? '?'}</div>
                 </div>
                 <div className="flex flex-col items-center gap-2">
-                  {game.away_team.logo_url && (
-                    <img src={game.away_team.logo_url} alt={game.away_team.name} className="w-16 h-16 object-contain" />
-                  )}
                   <div className="text-xl md:text-3xl font-bold text-white">{game.away_team.name}</div>
                   <div className="text-sm text-gray-400">{game.away_team.city}</div>
                 </div>
@@ -198,14 +231,14 @@ export default function GameDetailPage() {
               {alreadyReviewed ? 'Write Another Review' : 'Write a Review'}
             </Button>
           ) : (
-            <div className="bg-gradient-to-br from-amethyst/20 to-plum/20 rounded-2xl p-6 border border-white/10">
+            <div className="bg-linear-to-br from-amethyst/20 to-plum/20 rounded-2xl p-6 border border-white/10">
               <div className="flex items-center gap-3 mb-4">
                 <div className="bg-white/10 p-2 rounded-full">
                   <User className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <p className="text-white font-semibold">{user?.name}</p>
-                  <p className="text-white/50 text-xs">@{user?.username}</p>
+                  <p className="text-white font-semibold">{profile?.display_name || 'User'}</p>
+                  <p className="text-white/50 text-xs">@{profile?.username || 'username'}</p>
                 </div>
               </div>
 
@@ -254,7 +287,7 @@ export default function GameDetailPage() {
 
         {/* Community Reviews */}
         <div className="container-custom mt-8">
-          <div className="bg-gradient-to-br from-amethyst/20 to-plum/20 rounded-2xl p-6 border border-white/10">
+          <div className="bg-linear-to-br from-amethyst/20 to-plum/20 rounded-2xl p-6 border border-white/10">
             <div className="flex items-center gap-2 mb-6">
               <MessageSquare className="w-6 h-6 text-bronze" />
               <h2 className="text-2xl font-bold text-white">Community Reviews</h2>
@@ -280,11 +313,11 @@ export default function GameDetailPage() {
                   <div key={review.id} className="bg-white/5 rounded-xl p-4 border border-white/10">
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="bg-gradient-to-br from-magenta to-plum w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                          {review.name.charAt(0).toUpperCase()}
+                        <div className="bg-linear-to-br from-magenta to-plum w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                          {review.display_name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-white font-semibold text-sm">{review.name}</p>
+                          <p className="text-white font-semibold text-sm">{review.display_name}</p>
                           <p className="text-white/40 text-xs">@{review.username}</p>
                         </div>
                       </div>
@@ -296,7 +329,7 @@ export default function GameDetailPage() {
                             ))}
                           </div>
                         )}
-                        <span className="text-white/30 text-xs">{new Date(review.createdAt).toLocaleDateString()}</span>
+                        <span className="text-white/30 text-xs">{new Date(review.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
                     <p className="text-white/80 text-sm leading-relaxed">{review.text}</p>
@@ -310,7 +343,7 @@ export default function GameDetailPage() {
         {/* Top Performer */}
         {game.top_scorer && (
           <div className="container-custom mt-8">
-            <div className="bg-gradient-to-br from-magenta/20 to-plum/20 rounded-2xl p-6 border border-magenta/30">
+            <div className="bg-linear-to-br from-magenta/20 to-plum/20 rounded-2xl p-6 border border-magenta/30">
               <div className="flex items-center gap-2 mb-4">
                 <Trophy className="w-5 h-5 text-bronze" />
                 <h3 className="text-lg font-bold text-white">Top Performer</h3>

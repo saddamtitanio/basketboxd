@@ -11,53 +11,52 @@ import Link from 'next/link';
 import { createClient } from '../../lib/supabase/client';
 
 const BasketballIcon = createLucideIcon('Basketball', basketball);
-const supabase = createClient();
 
-export const Navbar: React.FC = () => {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
-  const router = useRouter();
+  export const Navbar: React.FC = () => {
+    const supabase = createClient();
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [user, setUser] = useState<any>(null);
+    const [profile, setProfile] = useState<any>(null);
+    const [authLoading, setAuthLoading] = useState(true);
+    const router = useRouter();
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const { data: profileData } = await supabase
+    useEffect(() => {
+      const fetchProfile = async (userId: string) => {
+        const { data } = await supabase
           .from('profiles')
           .select('*')
-          .eq('id', session.user.id)
-          .single();
-        setProfile(profileData);
-      }
+          .eq('id', userId)
+          .maybeSingle();
+        setProfile(data);
+      };
+
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        const currentUser = session?.user ?? null;
+        setUser(currentUser);
+        if (currentUser) fetchProfile(currentUser.id);
+        setAuthLoading(false);
+      });
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (_event, session) => {
+          const currentUser = session?.user ?? null;
+          setUser(currentUser);
+          if (currentUser) {
+            await fetchProfile(currentUser.id);
+          } else {
+            setProfile(null);
+          }
+          setAuthLoading(false);
+        }
+      );
+
+      return () => subscription.unsubscribe();
+    }, []);
+
+    const handleLogout = async () => {
+      await supabase.auth.signOut();
+      router.push('/');
     };
-    
-    getUser();
-    
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        setProfile(profileData);
-      } else {
-        setProfile(null);
-      }
-    });
-    
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
-  };
 
   return (
     <nav className="sticky top-0 z-50 bg-amethyst/95 backdrop-blur-md border-b border-white/10">
@@ -86,7 +85,7 @@ export const Navbar: React.FC = () => {
             </div>
             <SearchBar />
             <div className="flex items-center gap-3">
-              {!user ? (
+              {authLoading ? null : !user ? (
                 <>
                   <Button
                     variant="ghost"
@@ -154,7 +153,7 @@ export const Navbar: React.FC = () => {
               </div>
               <SearchBar />
               <div className="flex gap-3">
-                {!user ? (
+                {authLoading ? null : !user ? (
                   <>
                     <Button 
                       variant="ghost" 
