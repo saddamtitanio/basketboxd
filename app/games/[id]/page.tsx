@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Navbar } from '@/app/components/layout/Navbar';
 import { Footer } from '@/app/components/layout/Footer';
 import { sampleGames } from '@/app/data/Samples';
+import PlayerStats from '@/app/components/game/PlayerStats';
 import { 
   Star, 
   Flame, 
@@ -32,11 +33,7 @@ export default function GameDetailPage() {
   
   const [isWatchlisted, setIsWatchlisted] = useState(false);
   const [isWatched, setIsWatched] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  
 
   if (!game) {
     return (
@@ -143,11 +140,14 @@ export default function GameDetailPage() {
             <div className="flex flex-wrap justify-center gap-6 pt-6 border-t border-white/10">
               <div className="flex items-center gap-2 text-sm text-gray-300">
                 <Calendar className="w-4 h-4 text-bronze" />
-                {mounted ? new Date(game.game_date).toLocaleDateString() : 'Loading...'}
+                {new Date(game.game_date).toLocaleDateString()}
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-300">
                 <Clock className="w-4 h-4 text-bronze" />
-                {mounted ? new Date(game.game_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                {new Date(game.game_date).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  })}
               </div>
               <div className="flex items-center gap-2 text-sm text-gray-300">
                 <MapPin className="w-4 h-4 text-bronze" />
@@ -196,9 +196,25 @@ export default function GameDetailPage() {
             </div>
           </div>
         )}
+        <div className="container-custom mt-10 space-y-8">
+          {game.home_players && (
+            <PlayerStats
+            title={`${game.home_team.name} Players`}
+            players={game.home_players}
+            />
+            )}
+
+  {game.away_players && (
+    <PlayerStats
+      title={`${game.away_team.name} Players`}
+      players={game.away_players}
+    />
+  )}
+</div>
       </main>
       
       <Footer />
+      
     </div>
   );
 }
