@@ -22,7 +22,7 @@ export class AuthRepository {
             email,
             password,
             options: {
-                emailRedirectTo: "http://localhost:3000/login",
+                emailRedirectTo: "http://localhost:3000/authlogin",
             },
         });
     }
