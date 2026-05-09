@@ -76,11 +76,20 @@ export class ReviewService {
     }
 
     async getReview(reviewId: string) {
-        const reviews = await reviewRepository.findByGame(reviewId);
-        if (!reviews || reviews.length === 0) {
+        const review = await reviewRepository.findById(reviewId);
+        if (!review) {
             throw new Error("Review not found");
         }
-        return reviews[0]; 
+
+        const playerRatings = await playerRatingRepository.findByUserAndGame(
+            review.user_id,
+            review.game_id
+        );
+
+        return {
+            ...review,
+            player_ratings: playerRatings
+        };
     }
 
     async updateReview(

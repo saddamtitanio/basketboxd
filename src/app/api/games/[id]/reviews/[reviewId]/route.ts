@@ -3,6 +3,19 @@ import { ReviewService } from "@/src/modules/reviews/review.service";
 
 const reviewService = new ReviewService();
 
+// GET /api/games/:id/reviews --- Get detailed reviews for a specific game
+export async function GET(req: NextRequest, 
+    { params }: { params: Promise<{ id: string; reviewId: string }> }
+) {
+    const { id: gameId, reviewId } = await params;
+    try {
+        const reviews = await reviewService.getReview(reviewId);
+        return NextResponse.json(reviews);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+
 // PATH /api/games/:id/reviews/:reviewId --- Update a specific review
 export async function PATCH(
   req: NextRequest,

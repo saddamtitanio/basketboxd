@@ -17,7 +17,7 @@ export class PlayerRatingRepository {
             *,
             player:players (
                 id,
-                name,
+                full_name,
                 image_url
             )
             `)
@@ -38,14 +38,14 @@ export class PlayerRatingRepository {
         .select(`
             *,
             player:players (
-            id,
-            name,
-            image_url,
-            team_id
+                id,
+                full_name,
+                image_url,
+                team_id
             ),
             user:profiles (
-            id,
-            username
+                id,
+                username
             )
         `)
         .eq("game_id", gameId);
@@ -178,12 +178,12 @@ export class PlayerRatingRepository {
                 ),
                 game:games (
                     id,
-                    home_team:home_team_id_fkey (
+                    home_team:games_home_team_id_fkey (
                         id,
                         name,
                         logo_url
                     ),
-                    away_team:away_team_id_fkey (
+                    away_team:games_away_team_id_fkey (
                         id,
                         name,
                         logo_url
@@ -194,20 +194,51 @@ export class PlayerRatingRepository {
             .order('rating', { ascending: false })
             .limit(limit);
 
-        if (error) throw new Error(error.message);
+        if (error) {
+            console.log("Error fetching leaderboard:", error);
+            throw new Error(error.message);
+        }
 
-        // Map data to include team info based on player's team_id
         return data.map(d => {
-            const playerData = d.player[0];
-            const playerTeamId = playerData.team_id;
-            const game = d.game[0];
-            const team = game.home_team[0].id === playerTeamId ? game.home_team[0] : game.away_team[0];
+            if (!d.player) {
+                return null;
+            }
+
+            const playerData = Array.isArray(d.player) ? d.player[0] : d.player;
+            const game = Array.isArray(d.game) ? d.game[0] : d.game;
+
+            const homeTeam = Array.isArray(game.home_team) ? game.home_team[0] : game.home_team;
+            const awayTeam = Array.isArray(game.away_team) ? game.away_team[0] : game.away_team;
+
+            const team = homeTeam.id === playerData.team_id ? homeTeam : awayTeam;
 
             return {
                 player: playerData,
                 rating: d.rating,
                 team,
             };
-        });
+        }).filter(Boolean);
+    }
+    async findByUserAndGame(userId: string, gameId: string) {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from("player_ratings")
+            .select(`
+                *,
+                player:players (
+                    id,
+                    full_name,
+                    image_url,
+                    team_id
+                )
+            `)
+            .eq("user_id", userId)
+            .eq("game_id", gameId);
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        return data;
     }
 }

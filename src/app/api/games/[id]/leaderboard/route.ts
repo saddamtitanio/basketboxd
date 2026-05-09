@@ -4,21 +4,20 @@ import { PlayerRatingService } from '@/src/modules/player-ratings/player-rating.
 const playerRatingService = new PlayerRatingService();
 
 export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+    req: NextRequest,
+    { params }: { params: Promise<{ id: string }> }
 
 ) {
-  const gameId = params.id;
-  const { searchParams } = new URL(req.url);
-  const limit = Number(searchParams.get('limit') || 10);
+    const { id: gameId } = await params;
+    const { searchParams } = new URL(req.url);
+    const limit = Number(searchParams.get('limit') || 10);
 
-  try {
-    // Fetch all player ratings for this game
-    const leaderboard = await playerRatingService.getLeaderboard(limit, gameId);
+    try {
+        // Fetch all player ratings for this game
+        const leaderboard = await playerRatingService.getLeaderboard(limit, gameId);
 
-
-    return NextResponse.json(leaderboard);
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+        return NextResponse.json(leaderboard);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 }

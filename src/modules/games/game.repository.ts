@@ -23,7 +23,7 @@ export class GameRepository {
         .order("game_date", { ascending: false });
 
         if (error) {
-        throw new Error(error.message);
+            throw new Error(error.message);
         }
 
         return data;
@@ -52,7 +52,7 @@ export class GameRepository {
         .single();
 
         if (error) {
-        throw new Error(error.message);
+            throw new Error(error.message);
         }
 
         return data;
@@ -159,7 +159,7 @@ export class GameRepository {
             home_team:teams!games_home_team_id_fkey (
                 id,
                 name,
-                logo
+                logo_url
             ),
             away_team:teams!games_away_team_id_fkey (
                 id,

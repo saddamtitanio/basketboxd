@@ -59,7 +59,7 @@ export class ReviewRepository {
         .from("reviews")
         .select(`
             *,
-            user:profiles (
+            user:profiles!reviews_user_id_fkey (
                 id,
                 username,
                 avatar_url
@@ -73,7 +73,7 @@ export class ReviewRepository {
         if (error) {
             throw new Error(error.message);
         }
-
+        
         return data;
     }
 
@@ -116,7 +116,7 @@ export class ReviewRepository {
         .from("reviews")
         .select(`
             *,
-            user:profiles (
+            user:profiles!reviews_user_id_fkey (
                 id,
                 username,
                 avatar_url
@@ -206,41 +206,6 @@ export class ReviewRepository {
             .eq("id", reviewId)
             .select()
             .single();
-
-        if (error) throw new Error(error.message);
-
-        return data;
-    }
-
-    async getLeaderboard(limit = 10) {
-        const supabase = await createClient();
-
-        const { data, error } = await supabase
-            .from("player_ratings")
-            .select(`
-                player_id,
-                avg:rating,
-                player:players (
-                    id,
-                    name,
-                    image_url
-                ),
-                game:games (
-                    id,
-                    home_team:home_team_id_fkey (
-                        id,
-                        name,
-                        logo_url
-                    ),
-                    away_team:away_team_id_fkey (
-                        id,
-                        name,
-                        logo_url
-                    )
-                )
-            `)
-            .order('avg', { ascending: false })
-            .limit(limit);
 
         if (error) throw new Error(error.message);
 
