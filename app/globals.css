@@ -10,7 +10,6 @@
 
 @layer base {
   body {
-    /* This will use your custom colors correctly */
     background: linear-gradient(135deg, #311847 0%, #000000 50%, #A01A7D 100%);
     color: white;
   }
@@ -21,22 +20,21 @@
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
   
-  /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   
   ::-webkit-scrollbar-track {
-    background: rgba(49, 24, 71, 0.3); /* amethyst with opacity */
+    background: rgba(49, 24, 71, 0.3);
   }
   
   ::-webkit-scrollbar-thumb {
-    background: #EC4067; /* magenta */
+    background: #EC4067;
     border-radius: 9999px;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: #EF5D60; /* pink-lobster */
+    background: #EF5D60;
   }
 }
