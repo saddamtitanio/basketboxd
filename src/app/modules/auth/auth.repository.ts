@@ -8,7 +8,7 @@ export class AuthRepository {
             .from("profiles")
             .select("username")
             .eq("username", username)
-            .maybeSingle();
+            .single();
 
         if (existingUser) {
             throw new Error("Username already taken");
