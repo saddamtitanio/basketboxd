@@ -3,9 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Navbar } from '@/app/components/layout/Navbar';
-import { Footer } from '@/app/components/layout/Footer';
-import { sampleGames } from '@/app/data/Samples';
+import { Navbar } from '@/src/app/components/layout/Navbar';
+import { Footer } from '@/src/app/components/layout/Footer';
+import { sampleGames } from '@/src/app/data/Samples';
 import { 
   Star, 
   Flame, 
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { createLucideIcon } from 'lucide-react';
 import { basketball } from '@lucide/lab';
-import { Button } from '@/app/components/ui/Button';
+import { Button } from '@/src/app/components/ui/Button';
 
 const BasketballIcon = createLucideIcon('Basketball', basketball);
 

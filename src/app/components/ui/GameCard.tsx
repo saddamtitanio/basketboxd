@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Star, Flame, Clock } from 'lucide-react';
 import { createLucideIcon } from 'lucide-react';
 import { basketball } from '@lucide/lab';
-import { Game } from '@/app/data/Samples';
+import { Game } from '@/src/app/data/Samples';
 
 const BasketballIcon = createLucideIcon('Basketball', basketball);
 
