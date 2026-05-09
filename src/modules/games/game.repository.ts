@@ -2,10 +2,18 @@ import { createClient } from "@/src/app/lib/supabase/server";
 
 export class GameRepository {
     /* Get all games */
-    async findAll() {
+    async findAll(filters: {
+        season?: string;
+        teamId?: string;
+        arena?: string;
+        date?: string;
+        startDate?: string;
+        endDate?: string;
+        status?: string;
+    } = {}) {
         const supabase = await createClient();
 
-        const { data, error } = await supabase
+        let q = supabase
         .from("games")
         .select(`
             *,
@@ -19,8 +27,36 @@ export class GameRepository {
                 name,
                 logo_url
             )
-        `)
-        .order("game_date", { ascending: false });
+        `);
+
+        if (filters.status) {
+            q = q.eq("status", filters.status);
+        }
+        if (filters.season) {
+            q = q.eq("season", filters.season);
+        }
+        if (filters.teamId) {
+            q = q.or(`home_team_id.eq.${filters.teamId},away_team_id.eq.${filters.teamId}`);
+        }
+        if (filters.arena) {
+            q = q.ilike("arena", `%${filters.arena}%`);
+        }
+        if (filters.date) {
+            const day = filters.date;
+            q = q.gte("game_date", `${day}T00:00:00Z`).lte("game_date", `${day}T23:59:59Z`);
+        }
+
+        if (filters.startDate) {
+            q = q.gte("game_date", `${filters.startDate}T00:00:00Z`);
+        }
+        if (filters.endDate) {
+            q = q.lte("game_date", `${filters.endDate}T23:59:59Z`);
+        }
+
+        q = q.order("game_date", { ascending: false });
+
+        const { data, error } = await q;
+        
 
         if (error) {
             throw new Error(error.message);
@@ -85,7 +121,7 @@ export class GameRepository {
         .order("game_date", { ascending: false });
 
         if (error) {
-        throw new Error(error.message);
+            throw new Error(error.message);
         }
 
         return data;

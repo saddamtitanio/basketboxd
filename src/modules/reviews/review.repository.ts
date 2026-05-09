@@ -166,35 +166,20 @@ export class ReviewRepository {
         return data;
     }
     
-    async incrementLikes(reviewId: string) {
+    async incrementLikes(reviewId: string, userId: string) {
         const supabase = await createClient();
-        // temp
-        await supabase.auth.signInWithPassword({
-            email: process.env.TEMP_USER_EMAIL!,
-            password: process.env.TEMP_USER_PASSWORD!
-        });
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("User not authenticated");
 
-        const { data, error } = await supabase.rpc("toggle_like", { p_review_id: reviewId, p_user_id: user.id, p_action: "like" });
+        const { data, error } = await supabase.rpc("toggle_like", { p_review_id: reviewId, p_user_id: userId, p_action: "like" });
 
         if (error) throw new Error(error.message);
         return data;
     }
 
-    async decrementLikes(reviewId: string) {
+    async decrementLikes(reviewId: string, userId: string) {
         const supabase = await createClient();
 
-        // temp
-        await supabase.auth.signInWithPassword({
-            email: process.env.TEMP_USER_EMAIL!,
-            password: process.env.TEMP_USER_PASSWORD!
-        });
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("User not authenticated");
-
         const { data, error } = await supabase
-            .rpc("toggle_like", { p_review_id: reviewId, p_user_id: user.id, p_action: "unlike" });
+            .rpc("toggle_like", { p_review_id: reviewId, p_user_id: userId, p_action: "unlike" });
 
         if (error) throw new Error(error.message);
         return data;

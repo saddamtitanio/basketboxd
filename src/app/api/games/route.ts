@@ -3,35 +3,32 @@ import { GameService } from "@/src/modules/games/game.service";
 
 const gameService = new GameService();
 
-// GET /api/games --- Get all games or search/filter games based on query parameters
+// GET /api/games --- Get a list of games with optional filters
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
 
-    const searchQuery = searchParams.get("query");
-    const season = searchParams.get("season");
-    const teamId = searchParams.get("teamId");
+    const filters = {
+        query: searchParams.get("query") ?? undefined,
+        season: searchParams.get("season") ?? undefined,
+        teamId: searchParams.get("teamId") ?? undefined,
+        arena: searchParams.get("arena") ?? undefined,
+        date: searchParams.get("date") ?? undefined,
+        startDate: searchParams.get("startDate") ?? undefined,
+        endDate: searchParams.get("endDate") ?? undefined,
+        status: searchParams.get("status") ?? undefined,
+    };
+
+    const dateFields = ["date", "startDate", "endDate"] as const;
+    for (const field of dateFields) {
+        if (filters[field] && isNaN(new Date(filters[field]!).getTime())) {
+            return NextResponse.json({ error: `Invalid ${field} format` }, { status: 400 });
+        }
+    }
 
     try {
-        if (searchQuery) {
-            const games = await gameService.searchGames(searchQuery);
-            return NextResponse.json(games);
-        }
-
-        if (season) {
-            const games = await gameService.getGamesBySeason(season);
-            return NextResponse.json(games);
-        }
-
-        if (teamId) {
-            const games = await gameService.getGamesByTeam(teamId);
-            return NextResponse.json(games);
-        }
-
-        // Default (return all games)
-        const games = await gameService.getAllGames();
+        const games = await gameService.getGames(filters);
         return NextResponse.json(games);
-
     } catch (error: any) {
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
     }
 }

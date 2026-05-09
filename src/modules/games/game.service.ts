@@ -6,11 +6,19 @@ export class GameService {
     constructor() {
         this.gameRepository = new GameRepository();
     }
-
-    /* Get all games */
-    async getAllGames() {
-        return await this.gameRepository.findAll();
+    async getGames(filters: {
+        query?: string;
+        season?: string;
+        teamId?: string;
+        arena?: string;
+        date?: string;
+        startDate?: string;
+        status?: string;
+        endDate?: string;
+    }) {
+        return await this.gameRepository.findAll(filters);
     }
+    
 
     /* Get game by ID */
     async getGameById(id: string) {

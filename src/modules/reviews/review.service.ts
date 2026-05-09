@@ -1,7 +1,6 @@
 import { ReviewRepository } from "./review.repository";
 import { PlayerRatingRepository } from "@/src/modules/player-ratings/player-rating.repository";
 
-
 export class ReviewService {
     private reviewRepository: ReviewRepository;
     private playerRatingRepository: PlayerRatingRepository;
@@ -13,11 +12,10 @@ export class ReviewService {
 
     /* Submit full game review */
     async submitReview(data: {
-        user_id: string;
         game_id: string;
         rating: number;
         review_text: string;
-
+        user_id: string;
         player_ratings: {
             player_id: string;
             rating: number;
@@ -31,7 +29,7 @@ export class ReviewService {
         );
 
         if (existingReview) {
-        throw new Error("You already reviewed this game");
+            throw new Error("You already reviewed this game");
         }
 
         // validate game rating
@@ -99,6 +97,7 @@ export class ReviewService {
 
     async updateReview(
         reviewId: string,
+        userId: string,
         data: {
             rating?: number;
             review_text?: string;
@@ -108,26 +107,20 @@ export class ReviewService {
             }[];
         }
     ) {
+        // Validate game rating
+        if (data.rating !== undefined && (data.rating < 0 || data.rating > 5)) {
+            throw new Error("Game rating must be between 0 and 5");
+        }
+        if (data.player_ratings?.some(p => p.rating < 1 || p.rating > 10)) {
+            throw new Error("Player ratings must be between 1 and 10");
+        }
         // Find existing review
         const existingReview = await this.reviewRepository.findById(reviewId);
         if (!existingReview) {
             throw new Error("Review not found");
         }
-
-        // Validate game rating
-        if (data.rating !== undefined) {
-            if (data.rating < 0 || data.rating > 5) {
-                throw new Error("Game rating must be between 0 and 5");
-            }
-        }
-
-        // Validate player ratings if provided
-        if (data.player_ratings) {
-            for (const player of data.player_ratings) {
-                if (player.rating < 1 || player.rating > 10) {
-                    throw new Error("Player ratings must be between 1 and 10");
-                }
-            }
+        if (existingReview.user_id !== userId) {
+            throw new Error("Unauthorized");
         }
 
         // Update the main review
@@ -180,19 +173,22 @@ export class ReviewService {
         return this.reviewRepository.findByUser(userId);
     }
     
-    async likeReview(reviewId: string) {
-        return this.reviewRepository.incrementLikes(reviewId);
+    async likeReview(reviewId: string, userId: string) {
+        return this.reviewRepository.incrementLikes(reviewId, userId);
     }
 
-    async unlikeReview(reviewId: string) {
-        return this.reviewRepository.decrementLikes(reviewId);
+    async unlikeReview(reviewId: string, userId: string) {
+        return this.reviewRepository.decrementLikes(reviewId, userId);
     }
 
-    async deleteReview(reviewId: string) {
+    async deleteReview(reviewId: string, userId: string) {
         // Find existing review
         const existingReview = await this.reviewRepository.findById(reviewId);
         if (!existingReview) {
             throw new Error("Review not found");
+        }
+        if (existingReview.user_id !== userId) {
+            throw new Error("Unauthorized");
         }
 
         // Delete associated player ratings
