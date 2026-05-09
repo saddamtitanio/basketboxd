@@ -3,7 +3,21 @@ import { SupabaseClient } from "@supabase/supabase-js";
 export class AuthRepository {
     constructor(private supabase: SupabaseClient) {}
 
-    async signUp(email: string, password: string) {
+    async signUp(email: string, password: string, username: string) {
+        const { data: existingUser, error } = await this.supabase
+            .from("profiles")
+            .select("username")
+            .eq("username", username)
+            .single();
+
+        if (existingUser) {
+            throw new Error("Username already taken");
+        }
+
+        if (error) {
+            throw new Error("Error checking username availability");
+        }
+        
         return await this.supabase.auth.signUp({
             email,
             password,

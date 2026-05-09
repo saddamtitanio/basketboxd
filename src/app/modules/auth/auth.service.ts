@@ -44,7 +44,8 @@ export class AuthService {
         const { data: authData, error } =
             await this.repository.signUp(
                 data.email,
-                data.password
+                data.password,
+                data.username
             );
     
         if (error) {
