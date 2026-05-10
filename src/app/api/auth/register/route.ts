@@ -1,4 +1,4 @@
-import { AuthService } from '@/src/app/modules/auth/auth.service';
+import { AuthService } from '@/src/modules/auth/auth.service';
 
 export async function POST(request: Request) {
     try {

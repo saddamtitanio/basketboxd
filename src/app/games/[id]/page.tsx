@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Navbar } from '@/src/app/components/layout/Navbar';
 import { Footer } from '@/src/app/components/layout/Footer';
-import { sampleGames } from '@/src/app/data/Samples';
+import {Player } from '@/src/app/components/game/PlayerStats';
 import PlayerStats from '@/src/app/components/game/PlayerStats';
 import { createClient } from '@/src/app/lib/supabase/client';
 import {
@@ -19,12 +19,40 @@ import { Button } from '@/src/app/components/ui/Button';
 const BasketballIcon = createLucideIcon('Basketball', basketball);
 const supabase = createClient();
 
+type Team = {
+  id: string;
+  name: string;
+  city: string;
+  abbreviation: string;
+  logo_url?: string;
+  players?: Player[];
+};
+
+
+type Game = {
+  id: string;
+  home_team: Team;
+  away_team: Team;
+  home_score?: number;
+  away_score?: number;
+  game_date: string;
+  season: string;
+  arena: string;
+  status: string;
+};
+
 type Review = {
   id: string;
-  username: string;
-  display_name: string;
+  user_id: string;
+  user: {
+    id: string;
+    display_name: string;
+    avatar_url?: string;
+    username?: string;
+  };
   rating: number;
-  text: string;
+  review_text: string;
+  likes_count: number;
   created_at: string;
 };
 
@@ -39,10 +67,10 @@ export default function GameDetailPage() {
   const params = useParams();
   const router = useRouter();
   const gameId = params.id as string;
-  const game = sampleGames.find((g) => g.id === gameId);
 
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [game, setGame] = useState<Game | null>(null);
   const [loading, setLoading] = useState(true);
   const [isWatchlisted, setIsWatchlisted] = useState(false);
   const [isWatched, setIsWatched] = useState(false);
@@ -52,79 +80,134 @@ export default function GameDetailPage() {
   const [hoverRating, setHoverRating] = useState(0);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const initializePage = async () => {
       try {
         setLoading(true);
-      } catch (err) {
+
+        // Fetch game
+        const gameRes = await fetch(`/api/games/${gameId}`);
+        if (!gameRes.ok) throw new Error('Game not found');
+        const gameData = await gameRes.json();
+        setGame(gameData);
+
+        // Fetch reviews
+        const reviewsRes = await fetch(`/api/games/${gameId}/reviews`);
+        if (reviewsRes.ok) {
+          const reviewsData = await reviewsRes.json();
+          setReviews(reviewsData);
+        }
+
+        // Fetch auth user
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+
+        if (user) {
+          // Fetch profile
+          const profileRes = await fetch(`/api/users/${user.id}`);
+          if (profileRes.ok) {
+            const profileData = await profileRes.json();
+            setProfile(profileData);
+          }
+        }
+      } catch (err: any) {
         console.error(err);
+        setError(err.message);
       } finally {
         setLoading(false);
       }
     };
 
     initializePage();
-  }, []);
-
-  if (!game) {
-    return (
-      <div className="min-h-screen">
-        <Navbar />
-        <div className="container-custom py-20 text-center">
-          <h1 className="text-3xl font-bold text-white mb-4">Game not found</h1>
-          <Button onClick={() => router.push('/')}>Go Back Home</Button>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
+  }, [gameId]);
 
   const handleSubmitReview = async () => {
-    if (!user) { 
-      router.push('/auth/login'); 
-      return; 
-    }
+    if (!user) { router.push('/auth/login'); return; }
     if (!reviewText.trim()) return;
 
-    const newReview: Review = {
-      id: Date.now().toString(),
-      username: profile?.username || 'anonymous',
-      display_name: profile?.display_name || 'User',
-      rating: reviewRating,
-      text: reviewText.trim(),
-      created_at: new Date().toISOString(),
-    };
+    try {
+      setSubmitting(true);
+      const res = await fetch(`/api/games/${gameId}/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating: reviewRating, review_text: reviewText.trim() }),
+      });
 
-    setReviews((prev) => [newReview, ...prev]);
-    setReviewText('');
-    setReviewRating(0);
-    setShowReviewForm(false);
-    setSubmitted(true);
-    setTimeout(() => setSubmitted(false), 3000);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to post review');
+      }
+
+      const newReview = await res.json();
+
+      setReviews((prev) => [{
+        id: newReview.id,
+        user_id: user.id,
+        user: {
+          id: user.id,
+          display_name: profile?.display_name || 'User',
+          username: profile?.username,
+          avatar_url: profile?.avatar_url,
+        },
+        rating: newReview.rating,
+        review_text: newReview.review_text,
+        likes_count: 0,
+        created_at: newReview.created_at,
+      }, ...prev]);
+
+      setReviewText('');
+      setReviewRating(0);
+      setShowReviewForm(false);
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 3000);
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const getStatusBadge = () => {
+    if (!game) return null;
     switch (game.status) {
+      case 'closed':
       case 'final':
         return <span className="bg-amethyst px-3 py-1 rounded-full text-xs font-bold">FINAL</span>;
       case 'halftime':
         return <span className="bg-yellow-600 px-3 py-1 rounded-full text-xs font-bold">HALFTIME</span>;
+      case 'live':
       case '1st': case '2nd': case '3rd': case '4th':
-        return <span className="bg-red-600 px-3 py-1 rounded-full text-xs font-bold animate-pulse">LIVE {game.period}</span>;
+        return <span className="bg-red-600 px-3 py-1 rounded-full text-xs font-bold animate-pulse">LIVE</span>;
       default:
         return <span className="bg-plum px-3 py-1 rounded-full text-xs font-bold">UPCOMING</span>;
     }
   };
-
-  const alreadyReviewed = user && reviews.some((r) => r.username === profile?.username);
-
+  
+  const alreadyReviewed = user && reviews.some((r) => r.user_id === user.id);
+  
   if (loading) {
     return (
       <div className="min-h-screen">
         <Navbar />
         <div className="container-custom py-20 text-center">
           <div className="text-white text-xl">Loading...</div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !game) {
+    return (
+      <div className="min-h-screen">
+        <Navbar />
+        <div className="container-custom py-20 text-center">
+          <h1 className="text-3xl font-bold text-white mb-4">{error || 'Game not found'}</h1>
+          <Button onClick={() => router.push('/')}>Go Back Home</Button>
         </div>
         <Footer />
       </div>
@@ -149,14 +232,6 @@ export default function GameDetailPage() {
             <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
               <div className="flex items-center gap-3">
                 {getStatusBadge()}
-                <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 text-bronze fill-bronze" />
-                  <span className="text-sm">{game.rating}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Flame className="w-4 h-4 text-orange-500" />
-                  <span className="text-sm">{game.watchability}</span>
-                </div>
               </div>
               <div className="flex gap-3">
                 <button
@@ -266,16 +341,19 @@ export default function GameDetailPage() {
                 className="w-full bg-white/5 border border-white/20 rounded-xl p-4 text-white placeholder:text-white/40 outline-none focus:border-bronze transition resize-none"
               />
 
+              {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+
               <div className="flex gap-3 mt-4">
                 <button
                   onClick={handleSubmitReview}
-                  disabled={!reviewText.trim()}
+                  disabled={!reviewText.trim() || submitting}
                   className="flex items-center gap-2 bg-bronze hover:bg-orange-400 disabled:opacity-40 disabled:cursor-not-allowed text-white px-6 py-2.5 rounded-xl font-semibold transition"
                 >
-                  <Send className="w-4 h-4" /> Post Review
+                  <Send className="w-4 h-4" />
+                  {submitting ? 'Posting...' : 'Post Review'}
                 </button>
                 <button
-                  onClick={() => { setShowReviewForm(false); setReviewText(''); setReviewRating(0); }}
+                  onClick={() => { setShowReviewForm(false); setReviewText(''); setReviewRating(0); setError(null); }}
                   className="px-6 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition"
                 >
                   Cancel
@@ -314,11 +392,11 @@ export default function GameDetailPage() {
                     <div className="flex items-start justify-between gap-3 mb-3">
                       <div className="flex items-center gap-3">
                         <div className="bg-linear-to-br from-magenta to-plum w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                          {review.display_name.charAt(0).toUpperCase()}
+                          {review.user.display_name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="text-white font-semibold text-sm">{review.display_name}</p>
-                          <p className="text-white/40 text-xs">@{review.username}</p>
+                          <p className="text-white font-semibold text-sm">{review.user.display_name}</p>
+                          <p className="text-white/40 text-xs">@{review.user.username}</p>
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-1">
@@ -332,33 +410,33 @@ export default function GameDetailPage() {
                         <span className="text-white/30 text-xs">{new Date(review.created_at).toLocaleDateString()}</span>
                       </div>
                     </div>
-                    <p className="text-white/80 text-sm leading-relaxed">{review.text}</p>
+                    <p className="text-white/80 text-sm leading-relaxed">{review.review_text}</p>
                   </div>
                 ))}
               </div>
             )}
           </div>
         </div>
-
-        {/* Top Performer */}
-        {game.top_scorer && (
-          <div className="container-custom mt-8">
-            <div className="bg-linear-to-br from-magenta/20 to-plum/20 rounded-2xl p-6 border border-magenta/30">
-              <div className="flex items-center gap-2 mb-4">
-                <Trophy className="w-5 h-5 text-bronze" />
-                <h3 className="text-lg font-bold text-white">Top Performer</h3>
-              </div>
-              <p className="text-bronze font-semibold">{game.top_scorer}</p>
-            </div>
-          </div>
+      {/* Player Stats */}
+      <div className="container-custom mt-10 space-y-8">
+        {game.home_team.players && (
+          <PlayerStats
+            title={`${game.home_team.name} Players`}
+            players={game.home_team.players}
+            gameId={game.id}
+            userId={user?.id || ''}
+          />
         )}
 
-        {/* Player Stats */}
-        <div className="container-custom mt-10 space-y-8">
-          {game.home_players && <PlayerStats title={`${game.home_team.name} Players`} players={game.home_players} />}
-          {game.away_players && <PlayerStats title={`${game.away_team.name} Players`} players={game.away_players} />}
-        </div>
-
+        {game.away_team.players && (
+          <PlayerStats
+            title={`${game.away_team.name} Players`}
+            players={game.away_team.players}
+            gameId={game.id}
+            userId={user?.id || ''}
+          />
+        )}
+      </div>
       </main>
       <Footer />
     </div>

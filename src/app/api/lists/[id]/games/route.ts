@@ -1,4 +1,4 @@
-import { ListsService } from "@/src/app/modules/lists/lists.service";
+import { ListsService } from "@/src/modules/lists/lists.service";
 
 export async function GET(
     request: Request,

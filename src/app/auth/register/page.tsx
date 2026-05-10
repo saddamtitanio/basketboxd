@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AuthRepository } from '../../modules/auth/auth.repository';
+import { AuthRepository } from '../../../modules/auth/auth.repository';
 import { createClient } from '../../lib/supabase/client';
 import { ArrowLeft } from 'lucide-react';
 

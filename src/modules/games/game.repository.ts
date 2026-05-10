@@ -14,20 +14,13 @@ export class GameRepository {
         const supabase = await createClient();
 
         let q = supabase
-        .from("games")
-        .select(`
-            *,
-            home_team:teams!games_home_team_id_fkey (
-                id,
-                name,
-                logo_url
-            ),
-            away_team:teams!games_away_team_id_fkey (
-                id,
-                name,
-                logo_url
-            )
-        `);
+            .from("games")
+            .select(`
+                *,
+                home_team:teams!games_home_team_id_fkey (id, name, city, abbreviation, logo_url),
+                away_team:teams!games_away_team_id_fkey (id, name, city, abbreviation, logo_url),
+                reviews (rating)
+            `);
 
         if (filters.status) {
             q = q.eq("status", filters.status);
@@ -62,7 +55,14 @@ export class GameRepository {
             throw new Error(error.message);
         }
 
-        return data;
+        return data.map(game => ({
+            ...game,
+            rating: game.reviews.length
+                ? game.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / game.reviews.length
+                : undefined,
+            review_count: game.reviews.length || undefined,
+            reviews: undefined,
+        }));
     }
 
     /* Get game by ID */
@@ -76,12 +76,58 @@ export class GameRepository {
             home_team:teams!games_home_team_id_fkey (
                 id,
                 name,
-                logo_url
+                logo_url,
+                players (
+                    id,
+                    full_name,
+                    image_url,
+                    jersey_number,
+                    position,
+                    stats:player_games!player_games_player_id_fkey (
+                        game_id,
+                        pts,
+                        ast,
+                        reb,
+                        min,
+                        fga,
+                        fgm,
+                        three_fga,
+                        three_fgm,
+                        fta,
+                        ftm,
+                        fg_pct,
+                        stl,
+                        blk
+                    )
+                )
             ),
             away_team:teams!games_away_team_id_fkey (
                 id,
                 name,
-                logo_url
+                logo_url,
+                players (
+                    id,
+                    full_name,
+                    image_url,
+                    jersey_number,
+                    position,
+                    stats:player_games!player_games_player_id_fkey (
+                        game_id,
+                        pts,
+                        ast,
+                        reb,
+                        min,
+                        fga,
+                        fgm,
+                        three_fga,
+                        three_fgm,
+                        fta,
+                        ftm,
+                        fg_pct,
+                        stl,
+                        blk
+                    )
+                )
             )
         `)
         .eq("id", id)

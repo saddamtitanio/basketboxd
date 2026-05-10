@@ -62,6 +62,7 @@ export class ReviewRepository {
             user:profiles!reviews_user_id_fkey (
                 id,
                 username,
+                display_name,
                 avatar_url
             )
         `)
@@ -118,7 +119,7 @@ export class ReviewRepository {
             *,
             user:profiles!reviews_user_id_fkey (
                 id,
-                username,
+                display_name,
                 avatar_url
             )
         `)

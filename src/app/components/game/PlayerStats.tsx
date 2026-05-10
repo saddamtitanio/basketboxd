@@ -1,12 +1,46 @@
 'use client';
 
 import { useState } from 'react';
-import { ChevronDown, CheckCircle } from 'lucide-react';
-import type { Player } from '@/src/app/data/Samples';
+import { ChevronDown, CheckCircle } from 'lucide-react';  
+
+export type PlayerGameStats = {
+  game_id: string;
+
+  pts?: number;
+  reb?: number;
+  ast?: number;
+  stl?: number;
+  blk?: number;
+
+  min?: number;
+
+  fgm?: number;
+  fga?: number;
+
+  three_fgm?: number;
+  three_fga?: number;
+
+  ftm?: number;
+  fta?: number;
+
+  fg_pct?: number;
+};
+
+export type Player = {
+  id: string;
+  full_name: string;
+  image_url?: string;
+  jersey_number?: number;
+  position?: string;
+
+  stats?: PlayerGameStats[];
+};
 
 type Props = {
   title: string;
   players: Player[];
+  gameId: string;
+  userId: string;
 };
 
 const getRatingColor = (rating: number) => {
@@ -31,21 +65,59 @@ const getRatingLabel = (rating: number) => {
   return 'Elite';
 };
 
-export default function PlayerStats({ title, players }: Props) {
+export default function PlayerStats({ title, players, gameId, userId }: Props) {
   const [openPlayer, setOpenPlayer] = useState<string | null>(null);
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [sliderValues, setSliderValues] = useState<Record<string, number>>({});
   const [justRated, setJustRated] = useState<string | null>(null);
+  const [loadingPlayer, setLoadingPlayer] = useState<string | null>(null);
 
   const handleSliderChange = (playerId: string, value: number) => {
     setSliderValues((prev) => ({ ...prev, [playerId]: value }));
   };
 
-  const handleSubmitRating = (playerId: string) => {
-    const value = sliderValues[playerId] ?? 5;
-    setRatings((prev) => ({ ...prev, [playerId]: value }));
-    setJustRated(playerId);
-    setTimeout(() => setJustRated(null), 1800);
+  const handleSubmitRating = async (playerId: string) => {
+    try {
+      setLoadingPlayer(playerId);
+
+      const rating = sliderValues[playerId] ?? 5;
+
+      const response = await fetch('/api/player-ratings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          game_id: gameId,
+          player_id: playerId,
+          rating,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit rating');
+      }
+
+      setRatings((prev) => ({
+        ...prev,
+        [playerId]: rating,
+      }));
+
+      setJustRated(playerId);
+
+      setTimeout(() => {
+        setJustRated(null);
+      }, 1800);
+
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setLoadingPlayer(null);
+    }
   };
 
   return (
@@ -77,7 +149,7 @@ export default function PlayerStats({ title, players }: Props) {
                     <h3 className="text-white font-semibold">{player.full_name}</h3>
                     <p className="text-white/60 text-sm">#{player.jersey_number} • {player.position}</p>
                     <p className="text-white/80 text-sm mt-1">
-                      {player.pts} PTS • {player.reb} REB • {player.ast} AST
+                      {player.stats?.[0]?.pts} PTS • {player.stats?.[0]?.reb} REB • {player.stats?.[0]?.ast} AST
                     </p>
                   </div>
                 </div>
@@ -101,16 +173,16 @@ export default function PlayerStats({ title, players }: Props) {
               {isOpen && (
                 <div className="border-t border-white/10 p-4 bg-black/20">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Stat label="MIN" value={player.minutes} />
-                    <Stat label="PTS" value={player.pts} />
-                    <Stat label="REB" value={player.reb} />
-                    <Stat label="AST" value={player.ast} />
-                    <Stat label="STL" value={player.stl} />
-                    <Stat label="BLK" value={player.blk} />
-                    <Stat label="FG" value={`${player.fgm}/${player.fga}`} />
-                    <Stat label="3PT" value={`${player.three_fgm}/${player.three_fga}`} />
-                    <Stat label="FT" value={`${player.ftm}/${player.fta}`} />
-                    <Stat label="FG%" value={`${player.fg_percent}%`} />
+                    <Stat label="MIN" value={player.stats?.[0]?.min} />
+                    <Stat label="PTS" value={player.stats?.[0]?.pts} />
+                    <Stat label="REB" value={player.stats?.[0]?.reb} />
+                    <Stat label="AST" value={player.stats?.[0]?.ast} />
+                    <Stat label="STL" value={player.stats?.[0]?.stl} />
+                    <Stat label="BLK" value={player.stats?.[0]?.blk} />
+                    <Stat label="FG" value={`${player.stats?.[0]?.fgm}/${player.stats?.[0]?.fga}`} />
+                    <Stat label="3PT" value={`${player.stats?.[0]?.three_fgm}/${player.stats?.[0]?.three_fga}`} />
+                    <Stat label="FT" value={`${player.stats?.[0]?.ftm}/${player.stats?.[0]?.fta}`} />
+                    <Stat label="FG%" value={`${player.stats?.[0]?.fg_pct}%`} />
                   </div>
 
                   <div className="mt-6">
