@@ -17,7 +17,7 @@ export class ReviewRepository {
         })
         .select(`
             *,
-            user:profiles (
+            user:profiles!reviews_user_id_fkey (
                 id,
                 username,
                 avatar_url
@@ -55,26 +55,44 @@ export class ReviewRepository {
     /* Get reviews by game */
     async findByGame(gameId: string) {
         const supabase = await createClient();
-        const { data, error } = await supabase
-        .from("reviews")
-        .select(`
-            *,
-            user:profiles!reviews_user_id_fkey (
-                id,
-                username,
-                avatar_url
-            )
-        `)
-        .eq("game_id", gameId)
-        .order("created_at", {
-            ascending: false,
-        });
+
+        const { data: { user } } = await supabase.auth.getUser();
+
+        const userId = user?.id;
+        
+        const { data: reviews, error } = await supabase
+            .from("reviews")
+            .select(`
+                *,
+                user:profiles!reviews_user_id_fkey (
+                    id,
+                    username,
+                    display_name,
+                    avatar_url
+                )
+            `)
+            .eq("game_id", gameId)
+            .order("created_at", { ascending: false });
 
         if (error) {
             throw new Error(error.message);
         }
-        
-        return data;
+
+        let likedSet = new Set<string>();
+
+        if (userId) {
+            const { data: likes } = await supabase
+                .from("review_likes")
+                .select("review_id")
+                .eq("user_id", userId);
+
+            likedSet = new Set(likes?.map(l => l.review_id) || []);
+        }
+
+        return reviews.map(review => ({
+            ...review,
+            liked_by_me: likedSet.has(review.id),
+        }));
     }
 
     async delete(reviewId: string) {
@@ -118,7 +136,7 @@ export class ReviewRepository {
             *,
             user:profiles!reviews_user_id_fkey (
                 id,
-                username,
+                display_name,
                 avatar_url
             )
         `)

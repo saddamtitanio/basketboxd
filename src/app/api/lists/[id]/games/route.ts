@@ -1,4 +1,4 @@
-import { ListsService } from "@/src/app/modules/lists/lists.service";
+import { ListsService } from "@/src/modules/lists/lists.service";
 
 export async function GET(
     request: Request,
@@ -30,7 +30,7 @@ export async function POST(
     try {
         const { id } = await params;
 
-        const { gameId } =
+        const { game_id: gameId } =
             await request.json();
 
         const service =
@@ -41,7 +41,6 @@ export async function POST(
                 id,
                 gameId
             );
-
         return Response.json(data);
 
     } catch (error: any) {

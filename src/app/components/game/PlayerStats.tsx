@@ -1,12 +1,49 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronDown, CheckCircle } from 'lucide-react';
-import type { Player } from '@/src/app/data/Samples';
+import { useState, useEffect } from 'react';
+import { ChevronDown, CheckCircle } from 'lucide-react';  
+
+export type PlayerGameStats = {
+  game_id: string;
+
+  pts?: number;
+  reb?: number;
+  ast?: number;
+  stl?: number;
+  blk?: number;
+
+  min?: number;
+
+  fgm?: number;
+  fga?: number;
+
+  three_fgm?: number;
+  three_fga?: number;
+
+  ftm?: number;
+  fta?: number;
+
+  fg_pct?: number;
+};
+
+export type Player = {
+  id: string;
+  full_name: string;
+  image_url?: string;
+  jersey_number?: number;
+  position?: string;
+
+  stats?: PlayerGameStats[];
+
+  avg_rating?: number;
+  total_ratings?: number;
+};
 
 type Props = {
   title: string;
   players: Player[];
+  gameId: string;
+  userId: string;
 };
 
 const getRatingColor = (rating: number) => {
@@ -31,21 +68,162 @@ const getRatingLabel = (rating: number) => {
   return 'Elite';
 };
 
-export default function PlayerStats({ title, players }: Props) {
+export default function PlayerStats({ title, players, gameId, userId }: Props) {
   const [openPlayer, setOpenPlayer] = useState<string | null>(null);
   const [ratings, setRatings] = useState<Record<string, number>>({});
   const [sliderValues, setSliderValues] = useState<Record<string, number>>({});
   const [justRated, setJustRated] = useState<string | null>(null);
+  const [loadingPlayer, setLoadingPlayer] = useState<string | null>(null);
 
   const handleSliderChange = (playerId: string, value: number) => {
     setSliderValues((prev) => ({ ...prev, [playerId]: value }));
   };
+  const fetchRatings = async () => {
+    const responses = await Promise.all(
+      players.map(async (player) => {
+        const res = await fetch(
+          `/api/player-ratings?user_id=${userId}&game_id=${gameId}&player_id=${player.id}`
+        );
+        const data = await res.json();
 
-  const handleSubmitRating = (playerId: string) => {
-    const value = sliderValues[playerId] ?? 5;
-    setRatings((prev) => ({ ...prev, [playerId]: value }));
-    setJustRated(playerId);
-    setTimeout(() => setJustRated(null), 1800);
+        return {
+          playerId: player.id,
+          rating: data?.rating ?? null,
+        };
+      })
+    );
+
+    const ratingsMap: Record<string, number> = {};
+    const slidersMap: Record<string, number> = {};
+
+    responses.forEach((item) => {
+      if (item.rating != null) {
+        ratingsMap[item.playerId] = item.rating;
+        slidersMap[item.playerId] = item.rating;
+      }
+    });
+
+    setRatings(ratingsMap);
+    setSliderValues(slidersMap);
+  };
+  useEffect(() => {
+    const loadRatings = async () => {
+      try {
+        const responses = await Promise.all(
+          players.map(async (player) => {
+            const res = await fetch(
+              `/api/player-ratings?user_id=${userId}&game_id=${gameId}&player_id=${player.id}`
+            );
+            const data = await res.json();
+
+            return {
+              playerId: player.id,
+              rating: data?.rating,
+            };
+          })
+        );
+
+        const ratingsMap: Record<string, number> = {};
+        const slidersMap: Record<string, number> = {};
+
+        responses.forEach((item) => {
+          if (item.rating) {
+            ratingsMap[item.playerId] = item.rating;
+            slidersMap[item.playerId] = item.rating;
+          }
+        });
+
+        setRatings(ratingsMap);
+        setSliderValues(slidersMap);
+
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    loadRatings();
+  }, [players, userId, gameId]);
+
+  const handleSubmitRating = async (playerId: string) => {
+    try {
+      setLoadingPlayer(playerId);
+
+      const rating = sliderValues[playerId] ?? 5;
+
+      const response = await fetch('/api/player-ratings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          game_id: gameId,
+          player_id: playerId,
+          rating,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to submit rating');
+      }
+
+      setRatings((prev) => ({
+        ...prev,
+        [playerId]: rating,
+      }));
+
+      setJustRated(playerId);
+
+      setTimeout(() => {
+        setJustRated(null);
+      }, 1800);
+
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setLoadingPlayer(null);
+    }
+  };
+    const handleRemoveRating = async (playerId: string) => {
+    try {
+      setLoadingPlayer(playerId);
+
+      const response = await fetch(
+        `/api/player-ratings?game_id=${gameId}&player_id=${playerId}&user_id=${userId}`,
+        {
+          method: 'DELETE',
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to remove rating');
+      }
+
+      setRatings((prev) => {
+        const updated = { ...prev };
+        delete updated[playerId];
+        return updated;
+      });
+
+      setSliderValues((prev) => ({
+        ...prev,
+        [playerId]: 5,
+      }));
+
+      setJustRated(null);
+
+      await fetchRatings()
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setLoadingPlayer(null);
+    }
   };
 
   return (
@@ -56,10 +234,11 @@ export default function PlayerStats({ title, players }: Props) {
         {players.map((player) => {
           const isOpen = openPlayer === player.id;
           const submittedRating = ratings[player.id];
-          const sliderVal = sliderValues[player.id] ?? 5;
+          const sliderVal = sliderValues[player.id] ?? 5
           const showConfirm = justRated === player.id;
           const colors = getRatingColor(sliderVal);
           const submittedColors = submittedRating ? getRatingColor(submittedRating) : null;
+          const stats = player.stats?.[0];
 
           return (
             <div key={player.id} className="bg-white/5 rounded-xl overflow-hidden border border-white/10">
@@ -77,7 +256,7 @@ export default function PlayerStats({ title, players }: Props) {
                     <h3 className="text-white font-semibold">{player.full_name}</h3>
                     <p className="text-white/60 text-sm">#{player.jersey_number} • {player.position}</p>
                     <p className="text-white/80 text-sm mt-1">
-                      {player.pts} PTS • {player.reb} REB • {player.ast} AST
+                      {player.stats?.[0]?.pts} PTS • {player.stats?.[0]?.reb} REB • {player.stats?.[0]?.ast} AST
                     </p>
                   </div>
                 </div>
@@ -85,7 +264,7 @@ export default function PlayerStats({ title, players }: Props) {
                 <div className="flex items-center gap-3">
                   {/* "Rate the Player?" hint */}
                   {!submittedRating && (
-                    <span className="text-white/20 text-xs hidden sm:inline">Rate the Player?</span>
+                    <span className="text-white/40 text-xs hidden sm:inline">Rate the Player?</span>
                   )}
                   {submittedRating && submittedColors && (
                     <span className={`px-3 py-1 rounded-full text-sm font-bold ${submittedColors.bg} ${submittedColors.text}`}>
@@ -101,80 +280,139 @@ export default function PlayerStats({ title, players }: Props) {
               {isOpen && (
                 <div className="border-t border-white/10 p-4 bg-black/20">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <Stat label="MIN" value={player.minutes} />
-                    <Stat label="PTS" value={player.pts} />
-                    <Stat label="REB" value={player.reb} />
-                    <Stat label="AST" value={player.ast} />
-                    <Stat label="STL" value={player.stl} />
-                    <Stat label="BLK" value={player.blk} />
-                    <Stat label="FG" value={`${player.fgm}/${player.fga}`} />
-                    <Stat label="3PT" value={`${player.three_fgm}/${player.three_fga}`} />
-                    <Stat label="FT" value={`${player.ftm}/${player.fta}`} />
-                    <Stat label="FG%" value={`${player.fg_percent}%`} />
+                    <Stat label="MIN" value={stats?.min} />
+                    <Stat label="PTS" value={stats?.pts} />
+                    <Stat label="REB" value={stats?.reb} />
+                    <Stat label="AST" value={stats?.ast} />
+                    <Stat label="STL" value={stats?.stl} />
+                    <Stat label="BLK" value={stats?.blk} />
+                    <Stat label="FG" value={`${stats?.fgm}/${stats?.fga}`} />
+                    <Stat label="3PT" value={`${stats?.three_fgm}/${stats?.three_fga}`} />
+                    <Stat label="FT" value={`${stats?.ftm}/${stats?.fta}`} />
+                    <Stat
+                    label="FG%"
+                    value={
+                      stats?.fg_pct != null
+                        ? `${(stats.fg_pct * 100).toFixed(1)}`
+                        : "-"
+                    }
+                  />
                   </div>
 
                   <div className="mt-6">
-                    <p className="text-white font-semibold mb-4">Community Rating</p>
+                    {/* user section */}
+                    {userId ? (
+                      <>
+                        <p className="text-white font-semibold mb-4">Your Rating</p>
 
-                    {showConfirm ? (
-                      <div className="flex items-center gap-2 text-emerald-400 font-semibold">
-                        <CheckCircle className="w-5 h-5" />
-                        Rating <span className={`px-2 py-0.5 rounded-full text-sm font-bold ml-1 ${getRatingColor(ratings[player.id]).bg} ${getRatingColor(ratings[player.id]).text}`}>{ratings[player.id]}/10</span> submitted!
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {/* Score display */}
-                        <div className="flex items-center gap-4">
-                          <span
-                            className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-bold transition-all duration-200 ${colors.bg} ${colors.text}`}
-                          >
-                            {sliderVal}
-                          </span>
-                          <div>
-                            <p className={`font-semibold text-sm transition-colors duration-200`} style={{ color: colors.slider }}>
-                              {getRatingLabel(sliderVal)}
-                            </p>
-                            <p className="text-white/40 text-xs">out of 10</p>
+                        {showConfirm ? (
+                          <div className="flex items-center gap-2 text-emerald-400 font-semibold">
+                            <CheckCircle className="w-5 h-5" />
+                            Rating{" "}
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-sm font-bold ml-1 ${
+                                getRatingColor(ratings[player.id]).bg
+                              } ${getRatingColor(ratings[player.id]).text}`}
+                            >
+                              {ratings[player.id]}/10
+                            </span>{" "}
+                            submitted!
                           </div>
-                        </div>
-
-                        {/* Slider */}
-                        <div className="relative">
-                          <input
-                            type="range"
-                            min={1}
-                            max={10}
-                            step={1}
-                            value={sliderVal}
-                            onChange={(e) => handleSliderChange(player.id, Number(e.target.value))}
-                            className="w-full h-2 rounded-full appearance-none cursor-pointer outline-none"
-                            style={{
-                              background: `linear-gradient(to right, ${colors.slider} 0%, ${colors.slider} ${(sliderVal - 1) / 9 * 100}%, rgba(255,255,255,0.1) ${(sliderVal - 1) / 9 * 100}%, rgba(255,255,255,0.1) 100%)`,
-                              accentColor: colors.slider,
-                            }}
-                          />
-                          {/* Tick labels */}
-                          <div className="flex justify-between mt-1 px-0.5">
-                            {[1,2,3,4,5,6,7,8,9,10].map((n) => (
-                              <span key={n} className={`text-[10px] transition-colors duration-200 ${n === sliderVal ? 'text-white font-bold' : 'text-white/30'}`}>
-                                {n}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => handleSubmitRating(player.id)}
-                          className={`px-6 py-2 rounded-xl font-semibold text-sm transition-all duration-200 ${colors.bg} ${colors.text} hover:opacity-90 hover:scale-105`}
+                        ) : (
+                <div className="space-y-4">
+                  {/* Score display */}
+                  <div className="flex items-center gap-4">
+                    <span
+                      className={`w-14 h-14 rounded-xl flex items-center justify-center text-2xl font-bold transition-all duration-200 ${colors.bg} ${colors.text}`}
+                    >
+                      {sliderVal}
+                    </span>
+                      <div>
+                        <p
+                          className="font-semibold text-sm transition-colors duration-200"
+                          style={{ color: colors.slider }}
                         >
-                          Submit Rating
-                        </button>
+                          {getRatingLabel(sliderVal)}
+                        </p>
+                        <p className="text-white/40 text-xs">out of 10</p>
+                      </div>
+                    </div>
 
-                        {submittedRating && !showConfirm && (
-                          <p className="text-white/40 text-xs">
-                            Your last rating: <span className="font-bold text-white">{submittedRating}/10</span> — adjust and resubmit to change
-                          </p>
+                      {/* Slider */}
+                      <div className="relative">
+                        <input
+                          type="range"
+                          min={1}
+                          max={10}
+                          step={1}
+                          value={sliderVal}
+                          onChange={(e) =>
+                            handleSliderChange(player.id, Number(e.target.value))
+                          }
+                          className="w-full h-2 rounded-full appearance-none cursor-pointer outline-none"
+                          style={{
+                            background: `linear-gradient(to right, ${colors.slider} 0%, ${colors.slider} ${
+                              ((sliderVal - 1) / 9) * 100
+                            }%, rgba(255,255,255,0.1) ${
+                              ((sliderVal - 1) / 9) * 100
+                            }%, rgba(255,255,255,0.1) 100%)`,
+                            accentColor: colors.slider,
+                          }}
+                        />
+
+                        <div className="flex justify-between mt-1 px-0.5">
+                          {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+                            <span
+                              key={n}
+                              className={`text-[10px] transition-colors duration-200 ${
+                                n === sliderVal ? "text-white font-bold" : "text-white/30"
+                              }`}
+                            >
+                              {n}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Submit */}
+                      <button
+                        onClick={() => handleSubmitRating(player.id)}
+                        className={`px-6 py-2 cursor-pointer rounded-xl font-semibold text-sm transition-all duration-200 ${colors.bg} ${colors.text} hover:opacity-90 hover:scale-105`}
+                      >
+                        Submit Rating
+                      </button>
+
+                      {/* Remove */}
+                      {submittedRating && (
+                        <button
+                          onClick={() => handleRemoveRating(player.id)}
+                          className="px-6 cursor-pointer ml-5 py-2 rounded-xl font-semibold text-sm bg-gray-500 text-white hover:opacity-90 hover:scale-105 transition"
+                        >
+                          Remove Rating
+                        </button>
+                      )}
+
+                      {/* hint */}
+                      {submittedRating && !showConfirm && (
+                        <p className="text-white/40 text-xs">
+                          Your last rating:{" "}
+                          <span className="font-bold text-white">
+                            {submittedRating}/10
+                          </span>{" "}
+                          . Adjust and resubmit to change
+                        </p>
+                      )}
+                    </div>
                         )}
+                      </>
+                    ) : (
+                      <div className="mt-4">
+                        <button
+                          className="px-5 cursor-pointer py-2 rounded-xl bg-white text-black font-semibold hover:opacity-90 transition"
+                          onClick={() => (window.location.href = "/auth/login")}
+                        >
+                          Sign in to rate
+                        </button>
                       </div>
                     )}
                   </div>

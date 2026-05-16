@@ -1,4 +1,4 @@
-import { UsersService } from "@/src/app/modules/users/users.service";
+import { UsersService } from "@/src/modules/users/users.service";
 
 export async function GET(
     request: Request,

@@ -1,7 +1,13 @@
 'use client';
 
 import { X, Trophy, Clock, MapPin, Calendar } from 'lucide-react';
-import { sampleTeams } from '@/src/app/data/Samples';
+
+type Team = {
+  id: string;
+  name: string;
+  city: string;
+  abbreviation: string;
+};
 
 interface FilterPanelProps {
   selectedTeam: string;
@@ -19,6 +25,7 @@ interface FilterPanelProps {
   seasons: string[];
   arenas: string[];
   statuses: string[];
+  teams: Team[];
   hasActiveFilters: boolean;
   onClearAll: () => void;
 }
@@ -39,6 +46,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   seasons,
   arenas,
   statuses,
+  teams,
   hasActiveFilters,
   onClearAll,
 }) => {
@@ -71,7 +79,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             style={{ colorScheme: 'dark' }}
           >
             <option value="" style={{ backgroundColor: '#1a1a1a', color: 'white' }}>All Teams</option>
-            {sampleTeams.map(team => (
+            {teams.map((team) => (
               <option key={team.id} value={team.id} style={{ backgroundColor: '#1a1a1a', color: 'white' }}>
                 {team.name} ({team.city})
               </option>
@@ -92,7 +100,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             style={{ colorScheme: 'dark' }}
           >
             <option value="" style={{ backgroundColor: '#1a1a1a', color: 'white' }}>All Seasons</option>
-            {seasons.map(season => (
+            {seasons.map((season) => (
               <option key={season} value={season} style={{ backgroundColor: '#1a1a1a', color: 'white' }}>{season}</option>
             ))}
           </select>
@@ -111,7 +119,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             style={{ colorScheme: 'dark' }}
           >
             <option value="" style={{ backgroundColor: '#1a1a1a', color: 'white' }}>All Arenas</option>
-            {arenas.map(arena => (
+            {arenas.map((arena) => (
               <option key={arena} value={arena} style={{ backgroundColor: '#1a1a1a', color: 'white' }}>{arena}</option>
             ))}
           </select>
@@ -127,7 +135,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             style={{ colorScheme: 'dark' }}
           >
             <option value="" style={{ backgroundColor: '#1a1a1a', color: 'white' }}>All Status</option>
-            {statuses.map(status => (
+            {statuses.map((status) => (
               <option key={status} value={status} style={{ backgroundColor: '#1a1a1a', color: 'white' }}>
                 {status.toUpperCase()}
               </option>
