@@ -2,10 +2,10 @@
 
 import React from 'react';
 import { GameCard } from '../ui/GameCard';
-import { Game } from '../../data/Samples';
 import { ChevronRight, createLucideIcon } from 'lucide-react';
 import { basketball } from '@lucide/lab';
 import Link from "next/link";
+import { Game } from '@/src/app/types/index'
 
 const BasketballIcon = createLucideIcon('Basketball', basketball);
 
