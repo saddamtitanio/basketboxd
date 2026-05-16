@@ -10,6 +10,11 @@ const supabase = createClient();
 const authRepo = new AuthRepository(supabase);
 
 export default function RegisterPage() {
+  const usernameRegex = /^[a-z0-9_]{3,20}$/;
+  const displayNameRegex = /^[a-zA-Z0-9 ]{2,30}$/;
+  const passwordRegex = /^.{6,}$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
   const router = useRouter();
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -34,7 +39,35 @@ export default function RegisterPage() {
   
     setIsLoading(true);
     setError('');
-  
+    if (!usernameRegex.test(username)) {
+      setError('Username must be 3–20 characters and contain only lowercase letters, numbers, or underscores');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!displayNameRegex.test(displayName)) {
+      setError('Display name must be 2 - 30 characters and contain only letters, numbers, and spaces');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
+      setIsLoading(false);
+      return;
+    }
+
+    if (!passwordRegex.test(password)) {
+      setError('Password must be at least 6 characters');
+      setIsLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Passwords do not match');
+      setIsLoading(false);
+      return;
+    }
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       setIsLoading(false);
@@ -93,6 +126,15 @@ export default function RegisterPage() {
         <h1 className="text-3xl font-bold text-white text-center">Create Account</h1>
         <p className="text-center text-white/60 mb-4">Join the BasketBoxd community</p>
 
+                {error && (
+          <div className="rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+            {error}
+          </div>
+        )}
+
+        <label className="block text-sm text-white/70 mb-1">
+          Username
+        </label>
         <input
           type="text"
           placeholder="Username"
@@ -102,6 +144,9 @@ export default function RegisterPage() {
           required
         />
 
+        <label className="block text-sm text-white/70 mb-1">
+          Display Name
+        </label>
         <input
           type="text"
           placeholder="Display Name"
@@ -111,6 +156,9 @@ export default function RegisterPage() {
           required
         />
 
+        <label className="block text-sm text-white/70 mb-1">
+          Email Address
+        </label>
         <input
           type="email"
           placeholder="Email"
@@ -120,6 +168,9 @@ export default function RegisterPage() {
           required
         />
 
+        <label className="block text-sm text-white/70 mb-1">
+          Password
+        </label>
         <input
           type="password"
           placeholder="Password (min. 6 characters)"
@@ -129,6 +180,9 @@ export default function RegisterPage() {
           required
         />
 
+        <label className="block text-sm text-white/70 mb-1">
+          Confirm Password
+        </label>
         <input
           type="password"
           placeholder="Confirm Password"
@@ -137,9 +191,7 @@ export default function RegisterPage() {
           className="w-full p-3 rounded-lg bg-white/5 border border-white/20 text-white placeholder:text-white/50 outline-none focus:border-bronze transition"
           required
         />
-
-        {error && <p className="text-red-400 text-sm">{error}</p>}
-
+        
         <button
           type="submit"
           disabled={isLoading}
