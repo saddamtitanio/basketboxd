@@ -1,4 +1,5 @@
 import { createClient } from "@/src/app/lib/supabase/server";
+import { use } from "react";
 
 export class PlayerRatingRepository {
     /* Create player rating */
@@ -114,25 +115,53 @@ export class PlayerRatingRepository {
         .eq("user_id", userId);
 
         if (error) {
+            console.log(error)
             throw new Error(error.message);
         }
     }
 
-    async update(
-        ratingId: string,
-        data: {
-            rating: number;
-        }
+    /* Delete ratings by player, game, and user */
+    async deleteByPlayerGameUser(
+        playerId: string,
+        gameId: string
     ) {
         const supabase = await createClient();
-        const { data: updatedRating, error } = await supabase
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (user === null) {
+            throw new Error("User not authenticated");
+        }
+        
+        const { error } = await supabase
         .from("player_ratings")
-        .update({
-            rating: data.rating,
-        })
-        .eq("id", ratingId)
-        .select("*")
-        .single();
+        .delete()
+        .eq("player_id", playerId)
+        .eq("game_id", gameId)
+        .eq("user_id", user.id);
+
+        if (error) {
+            throw new Error(error.message);
+        }
+    }
+
+    async update(data: {
+        user_id: string;
+        game_id: string;
+        player_id: string;
+        rating: number;
+    }) {
+        const supabase = await createClient();
+
+        const { data: updatedRating, error } = await supabase
+            .from("player_ratings")
+            .update({
+                rating: data.rating,
+            })
+            .eq("user_id", data.user_id)
+            .eq("game_id", data.game_id)
+            .eq("player_id", data.player_id)
+            .select("*")
+            .maybeSingle();
 
         if (error) {
             throw new Error(error.message);
@@ -162,63 +191,26 @@ export class PlayerRatingRepository {
     }
 
     // Get top N players by average rating
-    async getLeaderboardByGame(gameId: string, limit = 10) {
+    async getLeaderboardByGame(gameId: string, limit = 5) {
         const supabase = await createClient();
 
-        const { data, error } = await supabase
-            .from("player_ratings")
-            .select(`
-                player_id,
-                rating,
-                player:players (
-                    id,
-                    full_name,
-                    image_url,
-                    team_id
-                ),
-                game:games (
-                    id,
-                    home_team:games_home_team_id_fkey (
-                        id,
-                        name,
-                        logo_url
-                    ),
-                    away_team:games_away_team_id_fkey (
-                        id,
-                        name,
-                        logo_url
-                    )
-                )
-            `)
-            .eq("game_id", gameId)
-            .order('rating', { ascending: false })
-            .limit(limit);
+        const { data, error } = await supabase.rpc(
+            "get_game_leaderboard",
+            {
+                p_game_id: gameId,
+                p_limit: limit,
+            }
+        );
 
         if (error) {
-            console.log("Error fetching leaderboard:", error);
+            console.error(error);
             throw new Error(error.message);
         }
 
-        return data.map(d => {
-            if (!d.player) {
-                return null;
-            }
-
-            const playerData = Array.isArray(d.player) ? d.player[0] : d.player;
-            const game = Array.isArray(d.game) ? d.game[0] : d.game;
-
-            const homeTeam = Array.isArray(game.home_team) ? game.home_team[0] : game.home_team;
-            const awayTeam = Array.isArray(game.away_team) ? game.away_team[0] : game.away_team;
-
-            const team = homeTeam.id === playerData.team_id ? homeTeam : awayTeam;
-
-            return {
-                player: playerData,
-                rating: d.rating,
-                team,
-            };
-        }).filter(Boolean);
+        return data;
     }
+   
+    
     async findByUserAndGame(userId: string, gameId: string) {
         const supabase = await createClient();
         const { data, error } = await supabase
@@ -240,5 +232,35 @@ export class PlayerRatingRepository {
         }
 
         return data;
+    }
+    async upsertRating(data: {
+        user_id: string;
+        game_id: string;
+        player_id: string;
+        rating: number;
+    }) {
+    const supabase = await createClient();
+
+    const { data: result, error } = await supabase
+        .from("player_ratings")
+        .upsert(
+        {
+            user_id: data.user_id,
+            game_id: data.game_id,
+            player_id: data.player_id,
+            rating: data.rating,
+        },
+        {
+            onConflict: "user_id,game_id,player_id",
+        }
+        )
+        .select()
+        .single();
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    return result;
     }
 }

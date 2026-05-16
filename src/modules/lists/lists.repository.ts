@@ -31,14 +31,91 @@ export class ListsRepository {
     async getPublicLists() {
         return await this.supabase
             .from("lists")
-            .select("*")
-            .eq("is_public", true);
+            .select(`
+                *,
+                profiles:profiles (
+                    id,
+                    username,
+                    display_name
+                ),
+                games:list_games (
+                    added_at,
+                    game:games (
+                        id,
+                        game_date,
+                        season,
+                        arena,
+                        status,
+                        home_score,
+                        away_score,
+                        image_url,
+                        home_team:teams!games_home_team_id_fkey (
+                            id,
+                            name,
+                            city,
+                            abbreviation,
+                            logo_url
+                        ),
+                        away_team:teams!games_away_team_id_fkey (
+                            id,
+                            name,
+                            city,
+                            abbreviation,
+                            logo_url
+                        )
+                    )
+                )
+            `)
+            .eq("is_public", true)
+            .order("created_at", { ascending: false });
     }
 
     async getListById(id: string) {
         return await this.supabase
             .from("lists")
             .select("*")
+            .eq("id", id)
+            .single();
+    }
+
+    async getListWithGames(id: string) {
+        return await this.supabase
+            .from("lists")
+            .select(`
+                *,
+                profiles:user_id (
+                    id,
+                    username,
+                    display_name
+                ),
+                games:list_games (
+                    added_at,
+                    game:games (
+                        id,
+                        game_date,
+                        season,
+                        arena,
+                        status,
+                        home_score,
+                        away_score,
+                        image_url,
+                        home_team:teams!games_home_team_id_fkey (
+                            id,
+                            name,
+                            city,
+                            abbreviation,
+                            logo_url
+                        ),
+                        away_team:teams!games_away_team_id_fkey (
+                            id,
+                            name,
+                            city,
+                            abbreviation,
+                            logo_url
+                        )
+                    )
+                )
+            `)
             .eq("id", id)
             .single();
     }
@@ -50,22 +127,21 @@ export class ListsRepository {
             .eq("id", id);
     }
 
-    async addGameToList(
-        listId: string,
-        gameId: number
-    ) {
-        return await this.supabase
+    async addGameToList(listId: string, gameId: string) {
+        const { data, error } = await this.supabase
             .from("list_games")
             .insert({
                 list_id: listId,
                 game_id: gameId,
-            });
+            })
+            .select();
+
+        console.log("INSERT RESULT:", { data, error });
+
+        return { data, error };
     }
 
-    async removeGameFromList(
-        listId: string,
-        gameId: number
-    ) {
+    async removeGameFromList(listId: string, gameId: string) {
         return await this.supabase
             .from("list_games")
             .delete()
@@ -76,7 +152,50 @@ export class ListsRepository {
     async getGamesInList(listId: string) {
         return await this.supabase
             .from("list_games")
-            .select("*")
-            .eq("list_id", listId);
+            .select(`
+                added_at,
+                game:games (
+                    id,
+                    game_date,
+                    season,
+                    arena,
+                    status,
+                    home_score,
+                    away_score,
+                    image_url,
+                    home_team:teams!games_home_team_id_fkey (
+                        id,
+                        name,
+                        city,
+                        abbreviation,
+                        logo_url
+                    ),
+                    away_team:teams!games_away_team_id_fkey (
+                        id,
+                        name,
+                        city,
+                        abbreviation,
+                        logo_url
+                    )
+                )
+            `)
+            .eq("list_id", listId)
+            .order("added_at", { ascending: false });
+    }
+    async updateList(
+    id: string,
+    updates: {
+        title?: string;
+        description?: string;
+        is_public?: boolean;
+        type?: string;
+    }
+    ) {
+    return await this.supabase
+        .from("lists")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
     }
 }

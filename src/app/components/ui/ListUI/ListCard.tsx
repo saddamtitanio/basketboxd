@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { Playlist } from '@/src/app/data/Samples';
+import { Playlist } from '@/src/app/types/index';
 import { User, Calendar } from 'lucide-react';
 import { createLucideIcon } from 'lucide-react';
 import { basketball } from '@lucide/lab';
@@ -25,11 +25,11 @@ export const ListCard: React.FC<ListCardProps> = ({ playlist, formatDate }) => {
       <div className="grid grid-cols-3 gap-0.5 h-32 overflow-hidden">
         {playlist.games.slice(0, 6).map((game, idx) => (
           <div key={idx} className="relative aspect-square bg-linear-to-br from-bronze/20 to-magenta/20 overflow-hidden">
-            {/* <img
-              src={game?.image_url ?? ''}
+            <img
+              src={game.image_url ?? null}
               alt={game.home_team.name}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            /> */}
+            />
             <div className="absolute inset-0 bg-black/40" />
           </div>
         ))}
@@ -63,7 +63,7 @@ export const ListCard: React.FC<ListCardProps> = ({ playlist, formatDate }) => {
         </div>
         
         <div className="mt-3 pt-3 border-t border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button className="w-full text-sm py-1.5 rounded-lg bg-magenta/20 text-magenta hover:bg-magenta hover:text-white transition-all duration-300 font-medium">
+          <button className="w-full cursor-pointer text-sm py-1.5 rounded-lg bg-magenta/20 text-magenta hover:bg-magenta hover:text-white transition-all duration-300 font-medium">
             View List →
           </button>
         </div>

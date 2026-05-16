@@ -4,32 +4,9 @@ import Link from 'next/link';
 import { Star, Clock } from 'lucide-react';
 import { createLucideIcon } from 'lucide-react';
 import { basketball } from '@lucide/lab';
+import { Game, Team } from '@/src/app/types/index'
 
 const BasketballIcon = createLucideIcon('Basketball', basketball);
-
-type Team = {
-  id: string;
-  name: string;
-  city: string;
-  abbreviation: string;
-  logo_url?: string;
-};
-
-type Game = {
-  id: string;
-  home_team: Team;
-  away_team: Team;
-  home_score?: number;
-  away_score?: number;
-  game_date: string;
-  season: string;
-  arena: string;
-  status: string;
-  image_url?: string;
-  // derived — computed from reviews table, optional
-  rating?: number;
-  review_count?: number;
-};
 
 interface GameCardProps {
   game: Game;
@@ -79,8 +56,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default' })
           <div className="absolute inset-0 bg-linear-to-t from-amethyst/80 via-plum/20 to-transparent" />
           {getStatusBadge()}
 
-          {/* Derived rating — only shown if available */}
-          {game.rating !== undefined && (
+          {game.rating != null && typeof game.rating === 'number' && (
             <div className="absolute bottom-3 right-3 bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1 flex items-center gap-1">
               <Star className="w-3.5 h-3.5 text-bronze fill-bronze" />
               <span className="text-xs font-bold text-white">{game.rating.toFixed(1)}</span>
@@ -94,7 +70,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, variant = 'default' })
               <BasketballIcon className="w-3 h-3 text-bronze" />
               <span className="text-xs text-gray-300 font-medium">{game.season}</span>
             </div>
-            {game.review_count !== undefined && game.review_count > 0 && (
+            {game.review_count != null && game.review_count > 0 && (
               <span className="text-[10px] text-gray-400">{game.review_count} review{game.review_count !== 1 ? 's' : ''}</span>
             )}
           </div>

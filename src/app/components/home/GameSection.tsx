@@ -5,6 +5,7 @@ import { GameCard } from '../ui/GameCard';
 import { Game } from '../../data/Samples';
 import { ChevronRight, createLucideIcon } from 'lucide-react';
 import { basketball } from '@lucide/lab';
+import Link from "next/link";
 
 const BasketballIcon = createLucideIcon('Basketball', basketball);
 
@@ -33,9 +34,11 @@ export const GameSection: React.FC<GameSectionProps> = ({
           <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">{title}</h2>
         </div>
         {viewAll && (
-          <button className="text-sm text-gray-400 hover:text-magenta transition-colors flex items-center gap-1">
-            View all <ChevronRight className="w-4 h-4" />
-          </button>
+          <Link href="/games">
+            <button className="text-sm cursor-pointer text-gray-400 hover:text-magenta transition-colors flex items-center gap-1">
+              View all <ChevronRight className="w-4 h-4" />
+            </button>
+          </Link>
         )}
       </div>
       

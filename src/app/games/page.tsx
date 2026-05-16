@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Navbar } from '../components/layout/Navbar';
 import { Footer } from '../components/layout/Footer';
 import { GameCard } from '../components/ui/GameCard';
@@ -19,14 +19,19 @@ type Game = {
   game_date: string; season: string; arena: string; status: string;
 };
 
+const STATUSES = ['upcoming', 'live', 'halftime', 'final', 'closed', '1st', '2nd', '3rd', '4th'];
+const SEARCH_DEBOUNCE_MS = 400;
+
 export default function GamesPage() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [games, setGames] = useState<Game[]>([]);
-  const [filteredGames, setFilteredGames] = useState<Game[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [seasons, setSeasons] = useState<string[]>([]);
+  const [arenas, setArenas] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
   const [selectedTeam, setSelectedTeam] = useState('');
   const [selectedSeason, setSelectedSeason] = useState('');
   const [selectedArena, setSelectedArena] = useState('');
@@ -34,57 +39,55 @@ export default function GamesPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
-  // Fetch all games on mount
+  // Debounce search — only fire fetch after user stops typing
   useEffect(() => {
-    const fetchGames = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch('/api/games');
-        if (!res.ok) throw new Error('Failed to fetch games');
-        const data = await res.json();
-        setGames(data);
-        setFilteredGames(data);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+    const timer = setTimeout(() => setDebouncedQuery(searchQuery), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const fetchGames = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const params = new URLSearchParams();
+      if (debouncedQuery) params.set('query', debouncedQuery);
+      if (selectedTeam) params.set('teamId', selectedTeam);
+      if (selectedSeason) params.set('season', selectedSeason);
+      if (selectedArena) params.set('arena', selectedArena);
+      if (selectedStatus) params.set('status', selectedStatus);
+      if (startDate) params.set('startDate', startDate);
+      if (endDate) params.set('endDate', endDate);
+
+      const res = await fetch(`/api/games?${params.toString()}`);
+      if (!res.ok) throw new Error('Failed to fetch games');
+      const data: Game[] = await res.json();
+      setGames(data);
+
+      const isUnfiltered = !selectedTeam && !selectedSeason && !selectedArena
+        && !selectedStatus && !startDate && !endDate && !debouncedQuery;
+
+      if (isUnfiltered) {
+        setSeasons([...new Set(data.map((g) => g.season))].filter(Boolean));
+        setArenas([...new Set(data.map((g) => g.arena))].filter(Boolean));
+
+        const teamMap = new Map<string, Team>();
+        data.forEach((g) => {
+          if (g.home_team?.id) teamMap.set(g.home_team.id, g.home_team);
+          if (g.away_team?.id) teamMap.set(g.away_team.id, g.away_team);
+        });
+        setTeams([...teamMap.values()].sort((a, b) => a.name.localeCompare(b.name)));
       }
-    };
-    fetchGames();
-  }, []);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [debouncedQuery, selectedTeam, selectedSeason, selectedArena, selectedStatus, startDate, endDate]);
 
-  // Derive filter options from fetched data
-  const seasons = [...new Set(games.map(g => g.season))];
-  const arenas = [...new Set(games.map(g => g.arena))];
-  const statuses = ['upcoming', 'live', 'halftime', 'final', 'closed', '1st', '2nd', '3rd', '4th'];
-
-  // Client-side filtering
   useEffect(() => {
-    let filtered = [...games];
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(game =>
-        game.home_team.name.toLowerCase().includes(query) ||
-        game.away_team.name.toLowerCase().includes(query) ||
-        game.home_team.city.toLowerCase().includes(query) ||
-        game.away_team.city.toLowerCase().includes(query) ||
-        game.arena.toLowerCase().includes(query)
-      );
-    }
-    if (selectedTeam) {
-      filtered = filtered.filter(game =>
-        game.home_team.id === selectedTeam || game.away_team.id === selectedTeam
-      );
-    }
-    if (selectedSeason) filtered = filtered.filter(game => game.season === selectedSeason);
-    if (selectedArena) filtered = filtered.filter(game => game.arena === selectedArena);
-    if (selectedStatus) filtered = filtered.filter(game => game.status === selectedStatus);
-    if (startDate) filtered = filtered.filter(game => new Date(game.game_date) >= new Date(startDate));
-    if (endDate) filtered = filtered.filter(game => new Date(game.game_date) <= new Date(endDate));
-
-    setFilteredGames(filtered);
-  }, [searchQuery, selectedTeam, selectedSeason, selectedArena, selectedStatus, startDate, endDate, games]);
+    fetchGames();
+  }, [fetchGames]);
 
   const clearAllFilters = () => {
     setSelectedTeam('');
@@ -94,34 +97,11 @@ export default function GamesPage() {
     setStartDate('');
     setEndDate('');
     setSearchQuery('');
+    setDebouncedQuery('');
   };
 
   const hasActiveFilters = Boolean(selectedTeam || selectedSeason || selectedArena || selectedStatus || startDate || endDate);
   const activeFilterCount = [selectedTeam, selectedSeason, selectedArena, selectedStatus, startDate, endDate].filter(Boolean).length;
-
-  if (loading) {
-    return (
-      <div className="min-h-screen">
-        <Navbar />
-        <div className="container-custom py-20 text-center">
-          <div className="text-white text-xl">Loading...</div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen">
-        <Navbar />
-        <div className="container-custom py-20 text-center">
-          <div className="text-red-400 text-xl">{error}</div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen">
@@ -143,6 +123,7 @@ export default function GamesPage() {
           />
           {showFilters && (
             <FilterPanel
+              teams={teams}
               selectedTeam={selectedTeam}
               setSelectedTeam={setSelectedTeam}
               selectedSeason={selectedSeason}
@@ -157,24 +138,36 @@ export default function GamesPage() {
               setEndDate={setEndDate}
               seasons={seasons}
               arenas={arenas}
-              statuses={statuses}
+              statuses={STATUSES}
               hasActiveFilters={hasActiveFilters}
               onClearAll={clearAllFilters}
             />
           )}
           <div className="flex justify-between items-center mb-6">
             <p className="text-gray-400">
-              Found <span className="text-bronze font-semibold">{filteredGames.length}</span> games
+              {loading
+                ? 'Searching…'
+                : <> Found <span className="text-bronze font-semibold">{games.length}</span> games</>
+              }
             </p>
-            {filteredGames.length === 0 && hasActiveFilters && (
+            {!loading && games.length === 0 && hasActiveFilters && (
               <button onClick={clearAllFilters} className="text-sm text-bronze hover:text-magenta transition">
                 Clear all filters
               </button>
             )}
           </div>
-          {filteredGames.length > 0 ? (
+
+          {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-              {filteredGames.map((game) => (
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="aspect-4/3 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
+              ))}
+            </div>
+          ) : error ? (
+            <div className="text-center py-20 text-red-400">{error}</div>
+          ) : games.length > 0 ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {games.map((game) => (
                 <GameCard key={game.id} game={game} />
               ))}
             </div>

@@ -64,13 +64,6 @@ export async function PUT(
 ) {
     const { reviewId } = await params;
     const supabase = await createClient();
-
-    // temp
-    await supabase.auth.signInWithPassword({
-        email: process.env.TEMP_USER_EMAIL!,
-        password: process.env.TEMP_USER_PASSWORD!
-    });
-
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { 
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -88,7 +81,11 @@ export async function PUT(
             return NextResponse.json({ error: "Invalid action" }, { status: 400 });
         }
 
-        return NextResponse.json(result);
+        return NextResponse.json({
+            success: true,
+            liked: action === 'like',
+            likes_count: result.likes_count,
+        });
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 400 });
     }

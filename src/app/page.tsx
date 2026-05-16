@@ -5,14 +5,7 @@ import { Footer } from './components/layout/Footer';
 import { HeroSection } from './components/home/HeroSection';
 import { GameSection } from './components/home/GameSection';
 import { Flame, Clock, Zap, Trophy } from 'lucide-react';
-
-type Team = { id: string; name: string; city: string; abbreviation: string; logo_url?: string; };
-type Game = {
-  id: string; home_team: Team; away_team: Team;
-  home_score?: number; away_score?: number;
-  game_date: string; season: string; arena: string; status: string;
-  image_url?: string; rating?: number; review_count?: number;
-};
+import { Game } from '@/src/app/types/index'
 
 export default function Home() {
   const [games, setGames] = useState<Game[]>([]);
