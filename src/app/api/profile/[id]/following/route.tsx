@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
 import { UsersService } from "@/src/modules/users/users.service";
 
-type Params = { params: Promise<{ username: string }> };
+type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_req: Request, { params }: Params) {
     try {
-        const { username } = await params;
+        const { id } = await params;
 
         const service = await UsersService.create();
 
-        const data = await service.getFollowing(username);
+        const data = await service.getFollowing(id);
 
         return NextResponse.json(data);
 
