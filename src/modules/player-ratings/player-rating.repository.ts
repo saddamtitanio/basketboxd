@@ -261,6 +261,27 @@ export class PlayerRatingRepository {
         throw new Error(error.message);
     }
 
-    return result;
+        return result;
+    }
+
+    async findBatchByUserGame(
+        userId: string, gameId: string, playerIds: string[]
+    ): Promise<Record<string, number | null>> {
+        const supabase = await createClient();
+        const { data, error } = await supabase
+            .from("player_ratings")
+            .select("player_id, rating")
+            .eq("user_id", userId)
+            .eq("game_id", gameId)
+            .in("player_id", playerIds);
+        if (error) throw new Error(error.message);
+ 
+        const map: Record<string, number | null> = {};
+        playerIds.forEach(id => { map[id] = null; });
+
+        (data ?? []).forEach((row: { player_id: string; rating: number }) => {
+            map[row.player_id] = row.rating;
+        });
+        return map;
     }
 }

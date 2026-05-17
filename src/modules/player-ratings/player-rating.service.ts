@@ -44,4 +44,12 @@ export class PlayerRatingService {
         return this.playerRatingRepo.findByUserGamePlayer(userId, gameId, playerId);
     }
     
+    async getBatchRatings(
+        userId: string,
+        gameId: string,
+        playerIds: string[]
+    ): Promise<Record<string, number | null>> {
+        if (playerIds.length === 0) return {};
+        return this.playerRatingRepo.findBatchByUserGame(userId, gameId, playerIds);
+    }
 }
