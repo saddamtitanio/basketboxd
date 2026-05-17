@@ -1,36 +1,216 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# BasketBoxd
+
+BasketBoxd is a basketball-focused social platform inspired by https://letterboxd.com/, where users can rate basketball games, review player performances, create watchlists, and interact with other basketball fans.
+
+Live Website: https://basketboxd-mx4q.vercel.app/
+
+---
+
+## About The Project
+
+BasketBoxd reimagines the Letterboxd experience for basketball fans.
+
+Instead of reviewing movies, users can:
+- Rate basketball games
+- Rate players individually
+- Write reviews and comments
+- Track watched games
+- Create personalized lists and watchlists
+- Discover trending games and player performances
+
+The platform is designed for basketball enthusiasts who want to share opinions, discuss performances, and keep track of memorable games.
+
+---
+
+## Features
+
+- User Authentication
+- Basketball Game Reviews
+- Player Rating System
+- Comment & Discussion System
+- Watchlists / Favorite Games
+- User Profiles
+- Search for Games and Players
+- Trending & Popular Games
+- Responsive UI
+
+---
+
+## Tech Stack
+
+### Frontend
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+
+### Backend
+- Next.js API Routes
+- Service / Repository Architecture
+
+### Database & Auth
+- Supabase
+
+### Deployment
+- Vercel
+
+---
+
+## 📂 Project Structure
+
+```bash
+├───public
+├───src
+│   ├───app
+│   │   ├───api
+│   │   │   ├───auth
+│   │   │   │   ├───login
+│   │   │   │   ├───profile
+│   │   │   │   └───register
+│   │   │   ├───games
+│   │   │   │   └───[id]
+│   │   │   │       ├───leaderboard
+│   │   │   │       └───reviews
+│   │   │   │           └───[reviewId]
+│   │   │   ├───lists
+│   │   │   │   ├───public
+│   │   │   │   └───[id]
+│   │   │   │       └───games
+│   │   │   ├───player-ratings
+│   │   │   ├───profile
+│   │   │   │   └───[id]
+│   │   │   │       ├───follow
+│   │   │   │       ├───followers
+│   │   │   │       └───following
+│   │   │   ├───search
+│   │   │   └───users
+│   │   │       ├───me
+│   │   │       └───[id]
+│   │   ├───auth
+│   │   │   ├───login
+│   │   │   └───register
+│   │   ├───components
+│   │   │   ├───game
+│   │   │   ├───home
+│   │   │   ├───layout
+│   │   │   └───ui
+│   │   │       └───ListUI
+│   │   ├───games
+│   │   │   └───[id]
+│   │   │       └───reviews
+│   │   ├───lib
+│   │   │   └───supabase
+│   │   ├───list
+│   │   │   └───[id]
+│   │   ├───profile
+│   │   │   ├───watchlist
+│   │   │   └───[id]
+│   │   └───types
+│   └───modules
+│       ├───auth
+│       ├───follows
+│       ├───games
+│       ├───lists
+│       ├───player-ratings
+│       ├───reviews
+│       └───users
+└───supabase
+```
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+Make sure you have installed:
+- Node.js
+- npm or yarn
+
+---
+
+### Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/saddamtitanio/basketboxd.git
+```
+
+Go into the project directory:
+
+```bash
+cd basketboxd
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## Environment Variables
 
-To learn more about Next.js, take a look at the following resources:
+Create a `.env.local` file and add:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_SHARABLE_KEY=your_SHARABLE_key
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+##  Project Goals
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The main goal of BasketBoxd is to create a social platform for basketball fans where discussions and ratings focus on games and player performances instead of films.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The project also aims to:
+- Encourage community interaction
+- Provide detailed player/game reviews
+- Help users track memorable games
+- Deliver a modern sports-focused social experience
+
+---
+
+##  Inspiration
+
+BasketBoxd is heavily inspired by https://letterboxd.com/, adapting its social review and rating system into the basketball world.
+
+---
+
+##  Contributors
+
+- Nicolas Chriscia
+- Saddam Titanio Darmawan
+- Mochammad Rafly Fatih Rabbani
+- Hafizh Akbar Ghifarie Ramadhan
+
+---
+
+## License
+
+This project is for educational purposes.
+
+---
+
+## Deployment
+
+BasketBoxd is deployed on:
+
+https://basketboxd-mx4q.vercel.app/
+
+---

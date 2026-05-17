@@ -147,15 +147,15 @@ export default function ProfilePage() {
                                 {/* Stats */}
                                 <div className="mt-6 pt-6 border-t border-white/10">
                                     <div className="flex justify-around">
-                                        <button onClick={() => router.push(`/profile/${profile?.username}`)} className="text-center hover:opacity-80 transition">
+                                        <button onClick={() => router.push(`/profile/${profile?.id}`)} className="text-center hover:opacity-80 transition">
                                             <div className="text-2xl font-bold text-bronze">{stats.reviews}</div>
                                             <div className="text-xs text-gray-400">Reviews</div>
                                         </button>
-                                        <button onClick={() => router.push(`/profile/${profile?.username}`)} className="text-center hover:opacity-80 transition">
+                                        <button onClick={() => router.push(`/profile/${profile?.id}`)} className="text-center hover:opacity-80 transition">
                                             <div className="text-2xl font-bold text-bronze">{stats.followers}</div>
                                             <div className="text-xs text-gray-400">Followers</div>
                                         </button>
-                                        <button onClick={() => router.push(`/profile/${profile?.username}`)} className="text-center hover:opacity-80 transition">
+                                        <button onClick={() => router.push(`/profile/${profile?.id}`)} className="text-center hover:opacity-80 transition">
                                             <div className="text-2xl font-bold text-bronze">{stats.following}</div>
                                             <div className="text-xs text-gray-400">Following</div>
                                         </button>

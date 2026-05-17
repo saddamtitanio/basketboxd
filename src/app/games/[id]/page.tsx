@@ -293,9 +293,6 @@ export default function GameDetailPage() {
                 <button onClick={handleWatchlist} className={`flex items-center cursor-pointer gap-2 px-4 py-2 rounded-lg text-sm transition-all ${isWatchlisted ? 'bg-bronze text-white' : 'bg-white/10 hover:bg-white/20 text-white'}`}>
                   <BookmarkPlus className="w-4 h-4" />{isWatchlisted ? 'Watchlisted' : 'Watchlist'}
                 </button>
-                <button onClick={() => setIsWatched(!isWatched)} className={`flex items-center cursor-pointer gap-2 px-4 py-2 rounded-lg text-sm transition-all ${isWatched ? 'bg-bronze text-white' : 'bg-white/10 hover:bg-white/20 text-white'}`}>
-                  <CheckCircle className="w-4 h-4" />{isWatched ? 'Watched' : 'Mark Watched'}
-                </button>
               </div>
             </div>
             <div className="text-center mb-8">
