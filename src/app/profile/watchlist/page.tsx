@@ -189,7 +189,7 @@ export default function WatchlistPage() {
           ) : games.length === 0 ? (
             /* Empty */
             <div className="bg-linear-to-br from-amethyst/20 mt-10 to-plum/20 border border-white/10 rounded-2xl p-12 text-center">
-              <BookmarkPlus className="w-14 h-14 text-gray-500 mx-auto mb-4 mt-5" />
+              <BookmarkPlus className="w-14 h-14 text-gray-500 mx-auto mb-4" />
 
               <h2 className="text-2xl font-bold text-white mb-2">
                 Your watchlist is empty
