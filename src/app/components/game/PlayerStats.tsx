@@ -17,7 +17,13 @@ export type Player = {
   avg_rating?: number; total_ratings?: number;
 };
 
-type Props = { title: string; players: Player[]; gameId: string; userId: string };
+type Props = {
+  title: string;
+  players: Player[];
+  gameId: string;
+  userId: string;
+  refreshLeaderboard: () => Promise<void>;
+};
 
 const getRatingColor = (r: number) => {
   if (r <= 2) return { bg: 'bg-red-700',     text: 'text-white', slider: '#b91c1c' };
@@ -41,7 +47,7 @@ const getRatingLabel = (r: number) => {
   return 'Elite';
 };
 
-export default function PlayerStats({ title, players, gameId, userId }: Props) {
+export default function PlayerStats({ title, players, gameId, userId, refreshLeaderboard }: Props) {
   const [openPlayer, setOpenPlayer]     = useState<string | null>(null);
   const [ratings, setRatings]           = useState<Record<string, number>>({});
   const [sliderValues, setSliderValues] = useState<Record<string, number>>({});
@@ -50,7 +56,6 @@ export default function PlayerStats({ title, players, gameId, userId }: Props) {
   const [ratingsLoading, setRatingsLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  // ── ONE batch fetch instead of N individual fetches ──────────────────────
   useEffect(() => {
     if (!userId || players.length === 0) return;
 
@@ -106,6 +111,8 @@ export default function PlayerStats({ title, players, gameId, userId }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to submit rating');
       setRatings(prev => ({ ...prev, [playerId]: rating }));
+      
+      await refreshLeaderboard();
       setJustRated(playerId);
       setTimeout(() => setJustRated(null), 1800);
     } catch (err: any) {

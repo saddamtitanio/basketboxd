@@ -65,9 +65,8 @@ export default function GameDetailPage() {
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
   const [leaderboardError, setLeaderboardError]     = useState<string | null>(null);
 
-  // ── Main data fetch ──────────────────────────────────────────────────────
+  // Main data fetch
   useEffect(() => {
-    // Cancel any in-flight request from a previous render
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -97,19 +96,17 @@ export default function GameDetailPage() {
         setUser(currentUser);
 
         if (currentUser) {
-          // Fetch profile in background — don't block the page
           fetch(`/api/users/${currentUser.id}`, { signal })
             .then(r => r.ok ? r.json() : null)
             .then(data => {
               if (!signal.aborted && data?.profile) {
-                // API returns { profile, stats, ... } — extract the inner profile
                 setProfile(data.profile);
               }
             })
             .catch(() => {});
         }
       } catch (err: any) {
-        if (err.name === 'AbortError') return; // navigation away — ignore
+        if (err.name === 'AbortError') return;
         setError(err.message);
       } finally {
         if (!signal.aborted) setLoading(false);
@@ -119,32 +116,35 @@ export default function GameDetailPage() {
     init();
     return () => controller.abort();
   }, [gameId]);
+  
+  const fetchLeaderboard = async () => {
+    setLeaderboardLoading(true);
+    setLeaderboardError(null);
 
-  // ── Leaderboard ──────────────────────────────────────────────────────────
+    try {
+      const res = await fetch(`/api/games/${gameId}/leaderboard?limit=5`);
+      const data = await res.json();
+
+      console.log("leaderboard refreshed", data);
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to fetch leaderboard');
+      }
+
+      setLeaderboard(data);
+    } catch (err: any) {
+      setLeaderboardError(err.message);
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  };
+  // Leaderboard
   useEffect(() => {
     if (!gameId) return;
-    const controller = new AbortController();
-
-    const fetchLeaderboard = async () => {
-      setLeaderboardLoading(true);
-      setLeaderboardError(null);
-      try {
-        const res  = await fetch(`/api/games/${gameId}/leaderboard?limit=5`, { signal: controller.signal });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Failed to fetch leaderboard');
-        if (!controller.signal.aborted) setLeaderboard(data);
-      } catch (err: any) {
-        if (err.name !== 'AbortError') setLeaderboardError(err.message);
-      } finally {
-        if (!controller.signal.aborted) setLeaderboardLoading(false);
-      }
-    };
 
     fetchLeaderboard();
-    return () => controller.abort();
   }, [gameId]);
 
-  // ── Watchlist check ──────────────────────────────────────────────────────
+  // Watchlist
   useEffect(() => {
     if (!user || !game) return;
     const check = async () => {
@@ -158,7 +158,7 @@ export default function GameDetailPage() {
     check();
   }, [user, game]);
 
-  // ── Sync existing review ─────────────────────────────────────────────────
+  // Sync existing review
   useEffect(() => {
     if (!user || reviews.length === 0) return;
     const mine = reviews.find(r => r.user_id === user.id);
@@ -347,8 +347,6 @@ export default function GameDetailPage() {
             </div>
           </div>
         )}
-
-        {/* Write review CTA */}
         {!myReview && (
           <div className="container-custom mt-8">
             <div className="bg-white/5 rounded-2xl p-4 border border-white/10 flex items-center justify-between gap-4">
@@ -374,7 +372,6 @@ export default function GameDetailPage() {
               </div>
               {reviews.length > 1 && <button onClick={() => router.push(`/games/${gameId}/reviews`)} className="text-sm text-bronze hover:text-orange-300">View all</button>}
             </div>
-            {submitted && <div className="flex items-center gap-2 text-emerald-400 font-semibold mb-4 bg-emerald-500/10 rounded-xl p-3"><CheckCircle className="w-5 h-5" />Your review was posted!</div>}
             {communityReviews.length === 0 ? (
               <div className="text-center py-12 text-gray-400"><MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>No reviews yet. Be the first!</p></div>
             ) : (
@@ -446,8 +443,8 @@ export default function GameDetailPage() {
 
         {/* Player Stats */}
         <div className="container-custom mt-10 space-y-8">
-          {game.home_team.players && <PlayerStats title={`${game.home_team.name} Players`} players={game.home_team.players} gameId={game.id} userId={user?.id || ''} />}
-          {game.away_team.players && <PlayerStats title={`${game.away_team.name} Players`} players={game.away_team.players} gameId={game.id} userId={user?.id || ''} />}
+          {game.home_team.players && <PlayerStats title={`${game.home_team.name} Players`} players={game.home_team.players} gameId={game.id} userId={user?.id || ''} refreshLeaderboard={fetchLeaderboard} />}
+          {game.away_team.players && <PlayerStats title={`${game.away_team.name} Players`} players={game.away_team.players} gameId={game.id} userId={user?.id || ''} refreshLeaderboard={fetchLeaderboard}/>}
         </div>
       </main>
 
